@@ -901,11 +901,63 @@ stopped:
 }
 
 
+static int
+hexdump_line(int got, int *lno, uint8_t *buf)
+{
+	int i;
+
+	for (i = 0; i < 16; i++) {
+		if (i < got)
+			printf("%02x ", buf[i]);
+		else
+			printf("   ");
+		if ((i & 7) == 7)
+			printf(" ");
+	}
+	if (got)
+		printf("|");
+	for (i = 0; i < got; i++)
+		if (isprint(buf[i]))
+			printf("%c", buf[i]);
+		else
+			printf(".");
+	if (got)
+		printf("|");
+	printf("\n");
+	(*lno)++;
+	if (*lno == 23) {
+stopped:
+		printf("-- more --");
+		i = getchar();
+		printf("\r          \r");
+		if (interrupt) {
+			printf("^C\n");
+			return (-1);
+		}
+		switch(i) {
+		case 4:
+		case 'q':
+			return (-1);
+		case ' ':
+			*lno = 0;
+			break;
+		case '\r':
+		case 'j':
+			(*lno)--;
+			break;
+		default:
+			goto stopped;
+		}
+	}
+	return (0);
+}
+
+
 static void
 hexdump_h(int argc, char **argv)
 {
 	uint8_t buf[16];
-	int fd, i, got, fpos = 0, lno = 0;
+	int fd, got, res, fpos = 0, lno = 0;
 
 	if (argc != 2) {
 		printf("Invalid arguments\n");
@@ -922,52 +974,8 @@ hexdump_h(int argc, char **argv)
 		got = read(fd, buf, 16);
 		printf("%08x  ", fpos);
 		fpos += got;
-		for (i = 0; i < 16; i++) {
-			if (i < got)
-				printf("%02x ", buf[i]);
-			else
-				printf("   ");
-			if ((i & 7) == 7)
-				printf(" ");
-		}
-		if (got)
-			printf("|");
-		for (i = 0; i < got; i++)
-			if (isprint(buf[i]))
-				printf("%c", buf[i]);
-			else
-				printf(".");
-		if (got)
-			printf("|");
-		printf("\n");
-		lno++;
-		if (lno == 23) {
-stopped:
-			printf("-- more --");
-			i = getchar();
-			printf("\r          \r");
-			if (interrupt) {
-				printf("^C\n");
-				close(fd);
-				return;
-			}
-			switch(i) {
-			case 4:
-			case 'q':
-				close(fd);
-				return;
-			case ' ':
-				lno = 0;
-				break;
-			case '\r':
-			case 'j':
-				lno--;
-				break;
-			default:
-				goto stopped;
-			}
-		}
-	} while (got > 0);
+		res = hexdump_line(got, &lno, buf);
+	} while (got > 0 && res == 0);
 	close(fd);
 }
 
@@ -1191,7 +1199,7 @@ baud_h(int argc, char **argv)
 static void
 flash_h(int argc, char **argv)
 {
-	int fd, start, len, res;
+	int fd, start, len, res, lno = 0;
 	struct diskio_inst di;
 #define	FLASH_SECLEN 4096
 	uint8_t buf[FLASH_SECLEN];
@@ -1255,11 +1263,26 @@ flash_h(int argc, char **argv)
 			if (res <= 0)
 				break;
 			if (res < FLASH_SECLEN)
-				memset(&buf[len], 0xff, FLASH_SECLEN - res);
+				memset(&buf[res], 0xff, FLASH_SECLEN - res);
 			di.sw->write(&di, buf, start, 1);
 			printf("\r%c", "|/-\\"[start & 0x3]);
 		}
 		printf("\nWrote %d bytes\n", len);
+		return;
+	case 'x':
+		if (argc < 2)
+			break;
+		start = strtol(argv[2], NULL, 0);
+		if (start < 0)
+			break;
+
+		do {
+			di.sw->read(&di, buf, start / FLASH_SECLEN, 1);
+			printf("%08x  ", start);
+			res = hexdump_line(16, &lno,
+			    &buf[start & (FLASH_SECLEN - 1)]);
+			start += 16;
+		} while (res == 0);
 		return;
 	default:
 	}
