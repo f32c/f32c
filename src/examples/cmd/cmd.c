@@ -602,6 +602,23 @@ mkfs_h(int argc, char **argv)
 
 
 static void
+rename_h(int argc, char **argv)
+{
+
+	if (argc != 3) {
+		printf("Invalid arguments\n");
+		return;
+	}
+
+	if (rename(argv[1], argv[2]) == 0)
+		return;
+
+	fprintf(stderr, "%s %s to %s: ", argv[0], argv[1], argv[2]);
+	perror(NULL);
+}
+
+
+static void
 cp_h(int argc, char **argv)
 {
 	char *buf;
@@ -1178,8 +1195,10 @@ const struct cmdswitch {
 	CMDSW_ENTRY("mkfs",	mkfs_h),
 #endif
 	CMDSW_ENTRY("more",	more_h),
+	CMDSW_ENTRY("mv",	rename_h),
 	CMDSW_ENTRY("pwd",	pwd_h),
 	CMDSW_ENTRY("quit",	exit_h),
+	CMDSW_ENTRY("rename",	rename_h),
 	CMDSW_ENTRY("srec",	srec_h),
 	CMDSW_ENTRY("rm",	rm_h),
 	CMDSW_ENTRY("rmdir",	rmdir_h),
