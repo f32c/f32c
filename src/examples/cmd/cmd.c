@@ -1058,7 +1058,10 @@ new_char:
 		if (type == '0') {
 			buf[addr] = 0;
 			printf("hdr: %s\n", buf);
+			goto new_line;
 		}
+		if (type == '5')
+			goto new_line;
 		if (type <= '3') {
 			if ((line & 0x3f) == 0)
 				printf("\r%c", "|/-\\"[(line >> 6) & 0x3]);
