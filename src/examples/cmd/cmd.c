@@ -1060,12 +1060,13 @@ new_char:
 			printf("hdr: %s\n", buf);
 		}
 		if (type <= '3') {
-			printf("%d: %08x\r", line, addr);
+			if ((line & 0x3f) == 0)
+				printf("\r%c", "|/-\\"[(line >> 6) & 0x3]);
 			last_addr = addr;
 			line++;
 			goto new_line;
 		}
-		printf("Writing %d bytes to %s...\n", last_addr - addr, name);
+		printf("\nWriting %d bytes to %s...\n", last_addr - addr, name);
 		fd = open(name, O_CREAT | O_RDWR, 0777);
 		if (fd < 0) {
 			printf("Can't open %s\n", name);
@@ -1165,6 +1166,23 @@ srec_h(int argc, char **argv)
 }
 
 
+#ifdef F32C
+static void
+baud_h(int argc, char **argv)
+{
+
+	if (argc == 1) {
+		printf("%d\n", sio_getbaud());
+		return;
+	}
+
+	if (sio_setbaud(atoi(argv[1])))
+		printf("Invalid baud rate: ");
+	printf("%s\n", argv[1]);
+}
+#endif
+
+
 static cmdhandler_t help_h;
 
 #define	CMDSW_ENTRY(t, h) { .tok = t, .handler = h}
@@ -1173,6 +1191,9 @@ const struct cmdswitch {
 	const char	*tok;
 	cmdhandler_t	*handler;
 } cmdswitch[] = {
+#ifdef F32C
+	CMDSW_ENTRY("baud",	baud_h),
+#endif
 	CMDSW_ENTRY("cd",	cd_h),
 	CMDSW_ENTRY("clear",	cls_h),
 	CMDSW_ENTRY("cls",	cls_h),
