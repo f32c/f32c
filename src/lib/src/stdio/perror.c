@@ -38,7 +38,7 @@ perror(const char *s)
 	char msgbuf[NL_TEXTMAX];
 
 	if (s != NULL && *s != '\0')
-		printf("%s: ", s);
+		fprintf(stderr, "%s: ", s);
 	strerror_r(errno, msgbuf, sizeof(msgbuf));
-	printf("%s\n", msgbuf);
+	fprintf(stderr, "%s\n", msgbuf);
 }
