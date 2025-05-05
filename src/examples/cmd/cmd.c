@@ -751,8 +751,11 @@ cmp_h(int argc, char **argv)
 			if (abuf[i] != bbuf[i])
 				break;
 		pos += i;
-		if (i != lim || got_a != got_b)
+		if (i != lim || got_a != got_b) {
+			printf("%s %s differ: byte %d\n", argv[1], argv[2],
+			    pos);
 			break;
+		}
 #ifdef F32C
 		/* CTRL + C ? */
 		if (sio_getchar(0) == 3) {
@@ -761,9 +764,6 @@ cmp_h(int argc, char **argv)
 		}
 #endif
 	} while (got_a > 0);
-
-	if (got_a != got_b)
-		printf("%s %s differ: byte %d\n", argv[1], argv[2], pos);
 
 	close(a);
 	close(b);
