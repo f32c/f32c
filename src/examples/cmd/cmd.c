@@ -22,6 +22,9 @@
 
 #ifndef F32C
 #include <sys/wait.h>
+#else
+#include <dev/io.h>
+#include <fatfs/diskio.h>
 #endif
 
 #define MAXARGS	16
@@ -1183,6 +1186,86 @@ baud_h(int argc, char **argv)
 		printf("Invalid baud rate: ");
 	printf("%s\n", argv[1]);
 }
+
+
+static void
+flash_h(int argc, char **argv)
+{
+	int fd, start, len, res;
+	struct diskio_inst di;
+#define	FLASH_SECLEN 4096
+	uint8_t buf[FLASH_SECLEN];
+
+	diskio_attach_flash(&di, IO_SPI_FLASH, 0, 0, 0x1000000);
+
+	switch (argv[1][0]) {
+	case 'r':
+		if (argc < 5)
+			break;
+		start = strtol(argv[3], NULL, 0);
+		len = strtol(argv[4], NULL, 0);
+		if (start < 0 || len <= 0)
+			break;
+		if ((start & (FLASH_SECLEN - 1)) != 0) {
+			printf("%08x (%d) is not sector aligned\n",
+			    start, start);
+			return;
+		}
+
+		fd = open(argv[2], O_CREAT | O_RDWR, 0777);
+		if (fd < 0) {
+			printf("Can't create %s\n", argv[2]);
+			return;
+		}
+
+		for (start /= FLASH_SECLEN; len > 0;
+		    len -= FLASH_SECLEN, start++) {
+			di.sw->read(&di, buf, start, 1);
+			if (len >= FLASH_SECLEN)
+				res = write(fd, buf, FLASH_SECLEN);
+			else
+				res = write(fd, buf, len);
+			if (res <= 0) {
+				perror("write failed");
+				break;
+			}
+		}
+		close(fd);
+		return;
+	case 'w':
+		if (argc < 4)
+			break;
+		start = strtol(argv[3], NULL, 0);
+		if (start < 0)
+			break;
+		if ((start & (FLASH_SECLEN - 1)) != 0) {
+			printf("%08x (%d) is not sector aligned\n",
+			    start, start);
+			return;
+		}
+
+		fd = open(argv[2], O_RDONLY);
+		if (fd < 0) {
+			printf("Can't open %s\n", argv[2]);
+			return;
+		}
+
+		for (start /= FLASH_SECLEN, len = 0;; start++, len += res) {
+			res = read(fd, buf, FLASH_SECLEN);
+			if (res <= 0)
+				break;
+			if (res < FLASH_SECLEN)
+				memset(&buf[len], 0xff, FLASH_SECLEN - res);
+			di.sw->write(&di, buf, start, 1);
+			printf("\r%c", "|/-\\"[start & 0x3]);
+		}
+		printf("\nWrote %d bytes\n", len);
+		return;
+	default:
+	}
+
+	printf("Invalid arguments\n");
+}
 #endif
 
 
@@ -1208,6 +1291,9 @@ const struct cmdswitch {
 	CMDSW_ENTRY("del",	rm_h),
 	CMDSW_ENTRY("dir",	ls_h),
 	CMDSW_ENTRY("exit",	exit_h),
+#ifdef F32C
+	CMDSW_ENTRY("flash",	flash_h),
+#endif
 	CMDSW_ENTRY("hd",	hexdump_h),
 	CMDSW_ENTRY("help",	help_h),
 	CMDSW_ENTRY("hexdump",	hexdump_h),
