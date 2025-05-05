@@ -1220,9 +1220,9 @@ const struct cmdswitch {
 	CMDSW_ENTRY("pwd",	pwd_h),
 	CMDSW_ENTRY("quit",	exit_h),
 	CMDSW_ENTRY("rename",	rename_h),
-	CMDSW_ENTRY("srec",	srec_h),
 	CMDSW_ENTRY("rm",	rm_h),
 	CMDSW_ENTRY("rmdir",	rmdir_h),
+	CMDSW_ENTRY("srec",	srec_h),
 	CMDSW_ENTRY("?",	help_h),
 	{ 0, 0 }
 };
