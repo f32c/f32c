@@ -19,6 +19,7 @@
 #include <unistd.h>
 
 #include <sys/stat.h>
+#include <sys/mount.h>
 
 #ifndef F32C
 #include <sys/wait.h>
@@ -55,9 +56,9 @@ static int
 task_create(cmdhandler_t *f, int argc, char **argv)
 {
 #ifndef F32C
+#if 0
 	int tid;
 
-#if 0
 	tid = fork();
 	if (tid)
 		return(tid);
@@ -1180,6 +1181,39 @@ srec_h(int argc, char **argv)
 }
 
 
+static void
+df_h(int argc, char **argv)
+{
+	int i, mounts;
+	struct statfs *buf;
+
+	mounts = getfsstat(NULL, 0, MNT_NOWAIT);
+	buf = calloc(mounts, sizeof(struct statfs));
+	if (buf == NULL) {
+		perror("malloc() failed");
+		return;
+	}
+	mounts = getfsstat(buf, mounts * sizeof(struct statfs), MNT_NOWAIT);
+	printf("Filesystem\t   1K-blocks\t Used\t  Avail"
+	    " Capacity  Mounted on\n");
+	for (i = 0; i < mounts; i++)
+#ifdef F32C
+#define U64FMT "llu"
+#else
+#define U64FMT "lu"
+#endif
+		printf("%18s %9" U64FMT " %8" U64FMT " %9"
+		    U64FMT "   %3" U64FMT "%%    %s\n",
+		    buf[i].f_mntfromname,
+		    buf[i].f_blocks * buf[i].f_bsize / 1024,
+		    (buf[i].f_blocks - buf[i].f_bfree) * buf[i].f_bsize / 1024,
+		    buf[i].f_bavail * buf[i].f_bsize / 1024,
+		    (buf[i].f_blocks - buf[i].f_bfree) * 100 / buf[i].f_blocks,
+		    buf[i].f_mntonname);
+	free(buf);
+}
+
+
 #ifdef F32C
 static void
 baud_h(int argc, char **argv)
@@ -1312,6 +1346,7 @@ const struct cmdswitch {
 	CMDSW_ENTRY("create",	create_h),
 	CMDSW_ENTRY("date",	date_h),
 	CMDSW_ENTRY("del",	rm_h),
+	CMDSW_ENTRY("df",	df_h),
 	CMDSW_ENTRY("dir",	ls_h),
 	CMDSW_ENTRY("exit",	exit_h),
 #ifdef F32C
@@ -1371,7 +1406,7 @@ int
 main(void)
 {
 	char line[128];
-	int i, ll, argc;
+	int i, ll, argc = 0;
 	char *argv[MAXARGS];
 	char *lcp;
 
