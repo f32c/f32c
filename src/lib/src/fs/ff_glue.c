@@ -35,6 +35,7 @@
 
 #include <sys/file.h>
 #include <sys/stat.h>
+#include <sys/mount.h>
 
 #include <fatfs/diskio.h>
 
@@ -445,4 +446,34 @@ stat(const char *path, struct stat *sb)
 		sb->st_mode |= S_IXUSR | S_IXGRP | S_IXOTH;
 
 	return(0);
+}
+
+
+int
+getfsstat(struct statfs *buf, long bufsize, int mode)
+{
+	int i, res, mounts;
+	FATFS *fs;
+	DWORD free_clus, tot_sec, free_sec;
+
+	for (i = 0, mounts = 0; i < FF_VOLUMES; i++) {
+		if (ff_mounts[i] == NULL)
+			continue;
+		res = f_getfree(disk_i[i].prefix, &free_clus, &fs);
+		if (res)
+			continue;
+		mounts++;
+		if (buf == NULL)
+			continue;
+		tot_sec = (fs->n_fatent - 2) * fs->csize;
+		free_sec = free_clus * fs->csize;
+		buf[mounts - 1].f_bsize = fs->ssize;
+		buf[mounts - 1].f_blocks = tot_sec;
+		buf[mounts - 1].f_bavail = tot_sec;
+		buf[mounts - 1].f_bfree = free_sec;
+		strcpy(buf[mounts - 1].f_mntfromname, disk_i[i].prefix);
+		strcpy(buf[mounts - 1].f_mntonname, disk_i[i].prefix);
+	}
+
+	return(mounts);
 }
