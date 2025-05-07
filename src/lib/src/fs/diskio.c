@@ -129,7 +129,7 @@ diskio_devstr(const char *descr, int port, int slave, int offset)
 	char *res;
 	int len;
 
-	len = sprintf(buf, "%s(%d,%d)", descr, port, slave);
+	len = sprintf(buf, "%s%d.%d", descr, port, slave);
 	if (offset)
 		len += sprintf(&buf[len], "+%dK", offset / 1024);
 	res = malloc(len + 1);

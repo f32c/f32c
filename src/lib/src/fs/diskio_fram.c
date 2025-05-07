@@ -156,7 +156,7 @@ diskio_attach_fram(diskio_t di, uint32_t io_port, uint8_t io_slave,
 	struct fram_priv *priv = DISKIO2PRIV(di);
 
 	di->d_sw = &fram_sw;
-	di->d_mntfrom = diskio_devstr("FR@SPI",
+	di->d_mntfrom = diskio_devstr("FRAM@spi",
 	    (io_port - IO_SPI_0) / (IO_SPI_1 - IO_SPI_0), io_slave, offset);
 	priv->io_port = io_port;
 	priv->io_slave = io_slave;

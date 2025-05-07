@@ -359,7 +359,7 @@ diskio_attach_flash(diskio_t di, uint32_t io_port, uint8_t io_slave,
 	struct flash_priv *priv = DISKIO2PRIV(di);
 
 	di->d_sw = &flash_sw;
-	di->d_mntfrom = diskio_devstr("FL@SPI",
+	di->d_mntfrom = diskio_devstr("Flash@spi",
 	    (io_port - IO_SPI_0) / (IO_SPI_1 - IO_SPI_0), io_slave, offset);
 	priv->io_port = io_port;
 	priv->io_slave = io_slave;
