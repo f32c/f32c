@@ -1239,6 +1239,7 @@ flash_h(int argc, char **argv)
 	uint8_t buf[FLASH_SECLEN];
 
 	diskio_attach_flash(&di, IO_SPI_FLASH, 0, 0, 0x1000000);
+	free(di->d_mntfrom);
 
 	switch (argv[1][0]) {
 	case 'r':
@@ -1262,7 +1263,7 @@ flash_h(int argc, char **argv)
 
 		for (start /= FLASH_SECLEN; len > 0;
 		    len -= FLASH_SECLEN, start++) {
-			di.sw->read(&di, buf, start, 1);
+			di.d_sw->read(&di, buf, start, 1);
 			if (len >= FLASH_SECLEN)
 				res = write(fd, buf, FLASH_SECLEN);
 			else
@@ -1298,7 +1299,7 @@ flash_h(int argc, char **argv)
 				break;
 			if (res < FLASH_SECLEN)
 				memset(&buf[res], 0xff, FLASH_SECLEN - res);
-			di.sw->write(&di, buf, start, 1);
+			di.d_sw->write(&di, buf, start, 1);
 			printf("\r%c", "|/-\\"[start & 0x3]);
 		}
 		printf("\nWrote %d bytes\n", len);
@@ -1311,7 +1312,7 @@ flash_h(int argc, char **argv)
 			break;
 
 		do {
-			di.sw->read(&di, buf, start / FLASH_SECLEN, 1);
+			di.d_sw->read(&di, buf, start / FLASH_SECLEN, 1);
 			printf("%08x  ", start);
 			res = hexdump_line(16, &lno,
 			    &buf[start & (FLASH_SECLEN - 1)]);
