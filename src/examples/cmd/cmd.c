@@ -1239,7 +1239,7 @@ flash_h(int argc, char **argv)
 	uint8_t buf[FLASH_SECLEN];
 
 	diskio_attach_flash(&di, IO_SPI_FLASH, 0, 0, 0x1000000);
-	free(di->d_mntfrom);
+	free((void *) di.d_mntfrom);
 
 	switch (argv[1][0]) {
 	case 'r':
