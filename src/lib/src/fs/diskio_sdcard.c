@@ -54,8 +54,6 @@ struct sdcard_priv {
 	int8_t		padding;
 };
 
-#define DISKIO2PRIV(d)  ((struct sdcard_priv *)((void *)(d)->priv_data))
-
 #define	SD_CMD_GO_IDLE_STATE		0
 #define	SD_CMD_SEND_OP_COND		1
 #define	SD_CMD_SEND_IF_COND		8
@@ -353,7 +351,7 @@ diskio_attach_sdcard(diskio_t di, uint32_t io_port, uint8_t io_slave)
 {
 	struct sdcard_priv *priv = DISKIO2PRIV(di);
 
-	di->sw = &sdcard_sw;
+	di->d_sw = &sdcard_sw;
 	priv->io_port = io_port;
 	priv->io_slave = io_slave;
 	priv->flags = 0;

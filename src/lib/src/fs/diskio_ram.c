@@ -48,10 +48,8 @@ struct ramdisk_priv {
 	uint32_t	size;
 };
 
-#define	DISKIO2PRIV(d)	((struct ramdisk_priv *)((void *)(d)->priv_data))
-
-#define	RAM_BASE(d)	DISKIO2PRIV(d)->base
-#define	RAM_SIZE(d)	DISKIO2PRIV(d)->size
+#define	RAM_BASE(d)	((struct ramdisk_priv *) DISKIO2PRIV(d))->base
+#define	RAM_SIZE(d)	((struct ramdisk_priv *) DISKIO2PRIV(d))->size
 
 #define	RAMDISK_SS	512
 
@@ -133,7 +131,8 @@ diskio_attach_ram(diskio_t di, void *base, uint32_t size)
 {
 	struct ramdisk_priv *priv = DISKIO2PRIV(di);
 
-	di->sw = &ramdisk_sw;
+	di->d_sw = &ramdisk_sw;
+	di->d_mntfrom = "RAM";
 	priv->base = base;
 	priv->size = size;
 	diskio_attach_generic(di);

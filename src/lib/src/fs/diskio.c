@@ -54,7 +54,7 @@ disk_initialize(BYTE drive)
 
 	if (di == NULL)
 		return STA_NOINIT;
-	return di->sw->init(di);
+	return di->d_sw->init(di);
 }
 
 
@@ -65,7 +65,7 @@ disk_status(BYTE drive)
 
 	if (di == NULL)
 		return STA_NOINIT;
-	return di->sw->status(di);
+	return di->d_sw->status(di);
 }
 
 
@@ -76,7 +76,7 @@ disk_read(BYTE drive, BYTE* buf, LBA_t sector, UINT count)
 
 	if (di == NULL)
 		return STA_NOINIT;
-	return di->sw->read(di, buf, sector, count);
+	return di->d_sw->read(di, buf, sector, count);
 }
 
 
@@ -87,7 +87,7 @@ disk_write(BYTE drive, const BYTE* buf, LBA_t sector, UINT count)
 
 	if (di == NULL)
 		return STA_NOINIT;
-	return di->sw->write(di, buf, sector, count);
+	return di->d_sw->write(di, buf, sector, count);
 }
 
 
@@ -98,7 +98,7 @@ disk_ioctl(BYTE drive, BYTE cmd, void* buf)
 
 	if (di == NULL)
 		return STA_NOINIT;
-	return di->sw->ioctl(di, cmd, buf);
+	return di->d_sw->ioctl(di, cmd, buf);
 }
 
 

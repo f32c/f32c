@@ -52,8 +52,6 @@ struct fram_priv {
 	uint8_t		padding[2];
 };
 
-#define DISKIO2PRIV(d)  ((struct fram_priv *)((void *)(d)->priv_data))
-
 #define	FRAM_SECLEN	512
 
 #define	FRAM_CMD_WRITE	0x02
@@ -157,7 +155,7 @@ diskio_attach_fram(diskio_t di, uint32_t io_port, uint8_t io_slave,
 {
 	struct fram_priv *priv = DISKIO2PRIV(di);
 
-	di->sw = &fram_sw;
+	di->d_sw = &fram_sw;
 	priv->io_port = io_port;
 	priv->io_slave = io_slave;
 	priv->offset = offset / FRAM_SECLEN;

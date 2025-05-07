@@ -95,10 +95,10 @@ ffres2errno(int fferr)
 
 
 static struct diskio_inst disk_i[FF_VOLUMES] = {
-	{ .prefix = "C:" },
-	{ .prefix = "D:" },
-	{ .prefix = "F:" },
-	{ .prefix = "R:" }
+	{ .d_mnton = "C:" },
+	{ .d_mnton = "D:" },
+	{ .d_mnton = "F:" },
+	{ .d_mnton = "R:" }
 };
 
 
@@ -136,7 +136,7 @@ check_automount(void)
 			diskio_attach_ram(&disk_i[i],
 			    malloc(i * 1024 * 1024), /* base addr*/
 			    i * 1024 * 1024 /* size, bytes */);
-		f_mount(ff_mounts[i], disk_i[i].prefix, 0);
+		f_mount(ff_mounts[i], disk_i[i].d_mnton, 0);
 	}
 	ff_mounted = 1;
 }
@@ -459,7 +459,7 @@ getfsstat(struct statfs *buf, long bufsize, int mode)
 	for (i = 0, mounts = 0; i < FF_VOLUMES; i++) {
 		if (ff_mounts[i] == NULL)
 			continue;
-		res = f_getfree(disk_i[i].prefix, &free_clus, &fs);
+		res = f_getfree(disk_i[i].d_mnton, &free_clus, &fs);
 		if (res)
 			continue;
 		mounts++;
@@ -471,8 +471,8 @@ getfsstat(struct statfs *buf, long bufsize, int mode)
 		buf[mounts - 1].f_blocks = tot_sec;
 		buf[mounts - 1].f_bavail = tot_sec;
 		buf[mounts - 1].f_bfree = free_sec;
-		strcpy(buf[mounts - 1].f_mntfromname, disk_i[i].prefix);
-		strcpy(buf[mounts - 1].f_mntonname, disk_i[i].prefix);
+		strcpy(buf[mounts - 1].f_mntfromname, disk_i[i].d_mnton);
+		strcpy(buf[mounts - 1].f_mntonname, disk_i[i].d_mnton);
 	}
 
 	return(mounts);

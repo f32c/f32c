@@ -91,10 +91,13 @@ struct diskio_sw {
 };
 
 struct diskio_inst {
-	const struct diskio_sw *sw;	/* diskio methods */
-	char		*prefix;	/* voume id, such as "C:" */
-	uint32_t	priv_data[4];	/* opaque private data */
+	const struct diskio_sw *d_sw;	/* diskio methods */
+	const char	*d_mntfrom;	/* device description */
+	const char	*d_mnton;	/* mountpoint, such as "C:" or "/" */
+	uint32_t	d_priv[4];	/* opaque private data */
 };
+
+#define	DISKIO2PRIV(d)	((void *)(d)->d_priv)
 
 void diskio_attach_generic(diskio_t);
 void diskio_attach_flash(diskio_t, uint32_t, uint8_t, uint32_t, uint32_t);

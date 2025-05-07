@@ -63,8 +63,6 @@ struct flash_priv {
 #define	F_BER64K_BROKEN	(1 << 3)
 #define	F_UNLOCK_DONE	(1 << 4)
 
-#define DISKIO2PRIV(d)  ((struct flash_priv *)((void *)(d)->priv_data))
-
 #define	FLASH_SECLEN	4096
 
 #define	SPI_CMD_WRSR	0x01	/* Write Status & Configuration Register */
@@ -360,7 +358,7 @@ diskio_attach_flash(diskio_t di, uint32_t io_port, uint8_t io_slave,
 {
 	struct flash_priv *priv = DISKIO2PRIV(di);
 
-	di->sw = &flash_sw;
+	di->d_sw = &flash_sw;
 	priv->io_port = io_port;
 	priv->io_slave = io_slave;
 	priv->offset = offset / FLASH_SECLEN;
