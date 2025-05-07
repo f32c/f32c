@@ -104,6 +104,7 @@ void diskio_attach_flash(diskio_t, uint32_t, uint8_t, uint32_t, uint32_t);
 void diskio_attach_fram(diskio_t, uint32_t, uint8_t, uint32_t, uint32_t);
 void diskio_attach_ram(diskio_t, void *, uint32_t);
 void diskio_attach_sdcard(diskio_t, uint32_t, uint8_t);
+char *diskio_devstr(const char *, int, int, int);
 
 #if defined(_FS_READONLY) && _FS_READONLY == 1
 #define	DISKIO_RO
