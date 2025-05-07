@@ -352,6 +352,8 @@ diskio_attach_sdcard(diskio_t di, uint32_t io_port, uint8_t io_slave)
 	struct sdcard_priv *priv = DISKIO2PRIV(di);
 
 	di->d_sw = &sdcard_sw;
+	di->d_mntfrom = diskio_devstr("SD@SPI",
+	    (io_port - IO_SPI_0) / (IO_SPI_1 - IO_SPI_0), io_slave, 0);
 	priv->io_port = io_port;
 	priv->io_slave = io_slave;
 	priv->flags = 0;

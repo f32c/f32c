@@ -471,7 +471,7 @@ getfsstat(struct statfs *buf, long bufsize, int mode)
 		buf[mounts - 1].f_blocks = tot_sec;
 		buf[mounts - 1].f_bavail = tot_sec;
 		buf[mounts - 1].f_bfree = free_sec;
-		strcpy(buf[mounts - 1].f_mntfromname, disk_i[i].d_mnton);
+		strcpy(buf[mounts - 1].f_mntfromname, disk_i[i].d_mntfrom);
 		strcpy(buf[mounts - 1].f_mntonname, disk_i[i].d_mnton);
 	}
 

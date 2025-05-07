@@ -24,6 +24,8 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <time.h>
 
 #include <fatfs/ff.h>
@@ -116,5 +118,22 @@ get_fattime(void)
 	    | tm.tm_mday << 16 | tm.tm_hour << 11
 	    | tm.tm_min << 5 | tm.tm_sec >> 1;
 
+	return (res);
+}
+
+
+char *
+diskio_devstr(const char *descr, int port, int slave, int offset)
+{
+	char buf[128];
+	char *res;
+	int len;
+
+	len = sprintf(buf, "%s(%d,%d)", descr, port, slave);
+	if (offset)
+		len += sprintf(&buf[len], "+%dK", offset / 1024);
+	res = malloc(len + 1);
+	if (res != NULL)
+		memcpy(res, buf, len + 1);
 	return (res);
 }
