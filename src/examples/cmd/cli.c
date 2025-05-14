@@ -1403,8 +1403,8 @@ sig_h(int sig)
 }
 
 
-int
-main(void)
+void
+cli(void)
 {
 	char line[128];
 	int i, ll, argc = 0;
