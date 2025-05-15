@@ -34,6 +34,7 @@
 static char *histbuf[MAXHIST];
 static uint32_t	curhist;
 static int interrupt;
+static int do_exit;
 
 typedef	void	cmdhandler_t(int, char **);
 
@@ -1030,7 +1031,7 @@ static void
 exit_h(int argc, char **argv)
 {
 
-	exit(0);
+	do_exit = 1;
 }
 
 
@@ -1304,6 +1305,7 @@ flash_h(int argc, char **argv)
 		}
 		printf("\nWrote %d bytes\n", len);
 		return;
+	case 'd':
 	case 'x':
 		if (argc < 2)
 			break;
@@ -1492,5 +1494,5 @@ retok:
 		else {
 			i = task_create(cmdswitch[i].handler, argc, argv);
 		}
-	} while (1);
+	} while (!do_exit);
 }
