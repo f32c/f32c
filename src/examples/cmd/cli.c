@@ -848,13 +848,16 @@ create_h(int argc, char **argv)
 static void
 more_h(int argc, char **argv)
 {
-	char buf[128];
+	char buf[2048];
 	int fd, got, i, c, last, lno = 0;
+	int cat_mode;
 
 	if (argc != 2) {
 		printf("Invalid arguments\n");
 		return;
 	}
+
+	cat_mode = argv[0][0] == 'c';
 
 	fd = open(argv[1], 0);
 	if (fd < 0) {
@@ -863,7 +866,11 @@ more_h(int argc, char **argv)
 	}
 
 	do {
-		got = read(fd, buf, 128);
+		got = read(fd, buf, sizeof(buf));
+		if (cat_mode && got > 0) {
+			write(1, buf, got);
+			continue;
+		}
 		for (i = 0, last = 0; i < got; i++) {
 			if (buf[i] == '\n') {
 				write(1, &buf[last], i - last + 1);
@@ -1340,6 +1347,7 @@ const struct cmdswitch {
 #ifdef F32C
 	CMDSW_ENTRY("baud",	baud_h),
 #endif
+	CMDSW_ENTRY("cat",	more_h),
 	CMDSW_ENTRY("cd",	cd_h),
 	CMDSW_ENTRY("clear",	cls_h),
 	CMDSW_ENTRY("cls",	cls_h),
