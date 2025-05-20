@@ -28,7 +28,7 @@
 #include <string.h>
 
 
-extern void *_end;
+extern void __section("data") *_end;
 
 static uint32_t *heap;
 
