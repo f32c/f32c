@@ -33,6 +33,8 @@ char *strtok_r(char *, const char *, char **);
 int strncmp(const char *, const char *, size_t);
 size_t strlcpy(char * restrict, const char * restrict, size_t);
 size_t strlcat(char * restrict, const char * restrict, size_t);
+size_t strnlen(const char *, size_t);
+char *strncat(char * restrict, const char * restrict, size_t);
 
 void *memchr(const void *, int, size_t) __pure;
 void *memmove(void *, const void *, size_t);
