@@ -232,8 +232,8 @@ begin
 	rxd => rs232_rx,
 	sel => sio_sel
     );
-    cons_esp32 <= sio_sel = x"0";
-    cons_f32c <= sio_sel = x"1";
+    cons_f32c <= sio_sel = x"0";
+    cons_esp32 <= sio_sel = x"1";
 
     -- SIO -> f32c
     f32c_rxd <= rs232_rx when cons_f32c else '1';
