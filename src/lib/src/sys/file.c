@@ -275,7 +275,7 @@ int fgetc(FILE *fp)
 	res = read(fp->_fd, &c, 1);
 	if (res != 1)
 		return (-1);
-	return (c);
+	return ((uint8_t) c);
 }
 
 
