@@ -1503,4 +1503,5 @@ retok:
 			i = task_create(cmdswitch[i].handler, argc, argv);
 		}
 	} while (!do_exit);
+	do_exit = 0;
 }
