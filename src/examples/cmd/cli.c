@@ -38,6 +38,9 @@ static int do_exit;
 
 typedef	void	cmdhandler_t(int, char **);
 
+extern FILE debf;
+#define dprintf(...) fprintf(&debf, __VA_ARGS__)
+
 
 static void
 set_term()
@@ -166,10 +169,10 @@ refresh:
 	endp = cp;
 	do {
 		c = getchar();
-		if (interrupt) {
+		if (interrupt)
 			printf("^C\n");
+		if (c < 0)
 			return (-1);
-		}
 
 		if (esc) {
 			switch (c) {
@@ -1432,8 +1435,11 @@ cli(void)
 
 	do {
 		interrupt = 0;
-		if (rl("cmd>", line, sizeof(line)))
-			continue;
+		if (rl("cmd>", line, sizeof(line))) {
+			if (interrupt)
+				continue;
+			break;
+		}
 
 retok:
 		ll = strlen(line) + 1;
