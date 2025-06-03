@@ -76,6 +76,13 @@ tty_iproc(struct tty *tty, int c)
 			return (-1);
 		} else
 			return (c);
+	case 0xd: /* CR */
+		if (tty->t_termios.c_iflag & IGNCR)
+			return (-1);
+		if (tty->t_termios.c_iflag & ICRNL)
+			return (0xa);
+		else
+			return (c);
 	case 0x13: /* XOFF */
 		if (tty->t_termios.c_iflag & IXON) {
 			tty->t_rflags |= TTY_OSTOP;
