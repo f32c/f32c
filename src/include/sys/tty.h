@@ -29,10 +29,11 @@
 #include <termios.h>
 
 #define	TTY_OSTOP	0x0001
+#define	TTY_IGOTCR	0x0010
 
 #define TTY_OBLOCKED(t) ((t) != NULL && ((t)->t_rflags & TTY_OSTOP))
 
-#define TTY_DO_IPROC(t, c) ((t) != NULL && ((c) < 32 || (c) > 126))
+#define TTY_DO_IPROC(t, c) ((t) != NULL && ((c) < 32 || (c) > 126 || (t->t_rflags & TTY_IGOTCR)))
 #define TTY_DO_OPROC(t, c) ((t) != NULL && ((uint) c) < 32)
 
 struct tty {

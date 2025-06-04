@@ -62,6 +62,10 @@ tty_iproc(struct tty *tty, int c)
 {
 	struct task *task;
 	sig_t sigh;
+	int rflags = tty->t_rflags;
+
+	if (rflags & TTY_IGOTCR)
+		tty->t_rflags &= ~TTY_IGOTCR;
 
 	switch(c) {
 	case 0x3: /* CTRL+C */
@@ -74,28 +78,35 @@ tty_iproc(struct tty *tty, int c)
 				task->ts_sigf |= (task->ts_sigf & 1) << 1;
 			}
 			return (-1);
-		} else
-			return (c);
+		}
+		break;
+	case 0xa: /* LF */
+		if (rflags & TTY_IGOTCR)
+			return (-1);
+		if (tty->t_termios.c_iflag & INLCR)
+			return (0xd);
+		break;
 	case 0xd: /* CR */
 		if (tty->t_termios.c_iflag & IGNCR)
 			return (-1);
-		if (tty->t_termios.c_iflag & ICRNL)
+		if (tty->t_termios.c_iflag & ICRNL) {
+			tty->t_rflags |= TTY_IGOTCR;
 			return (0xa);
-		else
-			return (c);
+		}
+		break;
 	case 0x13: /* XOFF */
 		if (tty->t_termios.c_iflag & IXON) {
 			tty->t_rflags |= TTY_OSTOP;
 			return (-1);
-		} else
-			return (c);
+		}
+		break;
 	case 0x11: /* XON */
 		if (tty->t_termios.c_iflag & IXON) {
 			tty->t_rflags &= ~TTY_OSTOP;
 			return (-1);
-		} else
-			return (c);
+		}
+		break;
 	default:
-		return (c);
 	}
+	return (c);
 }
