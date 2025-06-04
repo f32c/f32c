@@ -50,8 +50,8 @@ set_term()
 	tcgetattr(0, &nterm);
 
 	nterm.c_lflag &= ~(ECHO|ECHOK|ECHONL|ICANON);
-	nterm.c_iflag &= ~(IGNCR|INLCR|ICRNL);
-	nterm.c_iflag |= ISTRIP;
+	nterm.c_iflag &= ~(IGNCR|INLCR);
+	nterm.c_iflag |= (ICRNL|ISTRIP);
 
 	tcsetattr(0, TCSADRAIN, &nterm);
 }
