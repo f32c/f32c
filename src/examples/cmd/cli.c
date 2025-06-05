@@ -852,7 +852,7 @@ static void
 more_h(int argc, char **argv)
 {
 	char buf[2048];
-	int fd, got, i, c, last, lno = 0;
+	int fd, got, i, c, res, last, lno = 0;
 	int cat_mode;
 
 	if (argc != 2) {
@@ -871,7 +871,13 @@ more_h(int argc, char **argv)
 	do {
 		got = read(fd, buf, sizeof(buf));
 		if (cat_mode && got > 0) {
-			write(1, buf, got);
+			res = write(1, buf, got);
+			if (res != got) {
+				if (errno == EINTR)
+					printf("^C");
+				printf("\n");
+				break;
+			}
 			continue;
 		}
 		for (i = 0, last = 0; i < got; i++) {
