@@ -31,7 +31,6 @@ tsc_update(void)
 	next_t += tick_incr;
 	mtc0_macro(next_t, MIPS_COP_0_COMPARE);
 	cnt0++;
-	curthread_set((void *) cnt0);
 
 	return (1);
 }
