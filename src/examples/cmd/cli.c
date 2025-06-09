@@ -169,8 +169,6 @@ refresh:
 	endp = cp;
 	do {
 		c = getchar();
-		if (interrupt)
-			printf("^C\n");
 		if (c < 0)
 			return (-1);
 
@@ -872,7 +870,7 @@ more_h(int argc, char **argv)
 		got = read(fd, buf, sizeof(buf));
 		if (cat_mode && got > 0) {
 			res = write(1, buf, got);
-			if (res != got) {
+			if (interrupt || res != got) {
 				if (errno == EINTR)
 					printf("^C");
 				printf("\n");
@@ -1442,8 +1440,10 @@ cli(void)
 	do {
 		interrupt = 0;
 		if (rl("cmd>", line, sizeof(line))) {
-			if (interrupt)
+			if (errno == EINTR) {
+				printf("^C\n");
 				continue;
+			}
 			break;
 		}
 
