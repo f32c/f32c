@@ -19,6 +19,8 @@ LOCATE COMP "rs232_rx" SITE "M1";	# IN
 LOCATE COMP "rs232_tx" SITE "L4";	# OUT
 LOCATE COMP "rs232_rts" SITE "M3";	# IN
 LOCATE COMP "rs232_dtr" SITE "N1";	# IN
+LOCATE COMP "ftdi_cbus[0]" SITE "L3";	# IN
+LOCATE COMP "ftdi_cbus[1]" SITE "L5";	# IN
 
 # LED indicators
 LOCATE COMP "led[0]" SITE "B2";		# OUT
