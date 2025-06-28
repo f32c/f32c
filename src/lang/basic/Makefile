@@ -14,6 +14,9 @@ include ${POST_MK}
 
 CFLAGS += -Df32c
 
+# gcc-15 needs this
+CFLAGS += -std=gnu17
+
 ifneq ($(findstring ${WARNS}, "34"),)
 CFLAGS += -Wno-unused-parameter
 CFLAGS += -Wno-sign-compare
