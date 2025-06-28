@@ -39,10 +39,7 @@ static const int	year_lengths[2] = {
 };
 
 static void
-timesub(timep, offset, tmp)
-const time_t * const			timep;
-const long				offset;
-struct tm * const		tmp;
+timesub(const time_t * const timep, const long offset, struct tm * const tmp)
 {
 	long			days;
 	long			rem;
