@@ -3,9 +3,10 @@ PROG = dhry
 
 WARNS = 1
 
-# gcc-14 needs this
+# gcc-14 and above need this
 CFLAGS += -Wno-error=implicit-function-declaration
 CFLAGS += -Wno-error=implicit-int
+CFLAGS += -std=gnu17
 
 # use clock(3) for time measurement
 CFLAGS += -DMSC_CLOCK
