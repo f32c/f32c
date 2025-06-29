@@ -88,7 +88,7 @@ then
     rm *.tar*
     mv */* .
     ./contrib/download_prerequisites 
-    patch -p0 < ${F32C_SRC_COMPILER_DIR}/patches/gcc-13.2.0.diff
+    patch -p0 < ${F32C_SRC_COMPILER_DIR}/patches/gcc-14.2.0.diff
 fi
 
 
