@@ -1017,22 +1017,20 @@ chargen_h(int argc, char **argv)
 		if ((res = write(1, buf, sizeof(buf))) != sizeof(buf))
 			break;
 	clock_gettime(CLOCK_MONOTONIC, &end);
-	if (interrupt)
-		printf("^C");
 	if (res != sizeof(buf))
 		printf("Incomplete buffer write (%d instead %d bytes)\n",
 		    res, sizeof(buf));
 	tns = (end.tv_sec - start.tv_sec) * 1000000000
 	    + end.tv_nsec - start.tv_nsec;
+	printf("\nWrote ");
 	if (i < 1024)
-		printf("\nWrote %lld K", i);
+		printf("%lld K", i);
 	else if (i < 1024 * 1024)
-		printf("\nWrote %.3f M", i / 1024.0);
+		printf("%.3f M", i / 1024.0);
 	else
-		printf("\nWrote %.3f G", i / 1024 / 1024.0);
+		printf("%.3f G", i / 1024 / 1024.0);
 	printf("bytes in %.3f s (%.3f KBytes/s)\n", 0.000000001 * tns,
 	    i / (0.000000001 * tns));
-	interrupt = 0;
 }
 
 
