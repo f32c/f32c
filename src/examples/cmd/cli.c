@@ -997,6 +997,40 @@ hexdump_h(int argc, char **argv)
 
 
 static void
+chargen_h(int argc, char **argv)
+{
+	int64_t lim = -1;
+	int64_t i;
+	uint64_t tns;
+	int res;
+	char buf[1024];
+	struct timespec start, end;
+
+	if (argc == 2)
+		lim = atoi(argv[1]);
+
+	for (i = 0; i < sizeof(buf); i++)
+		buf[i] = ' ' + (i & 0x3f);
+
+	clock_gettime(CLOCK_MONOTONIC, &start);
+	for (i = 0; (lim < 0 || i < lim) && !interrupt; i++)
+		if ((res = write(1, buf, sizeof(buf))) != sizeof(buf))
+			break;
+	clock_gettime(CLOCK_MONOTONIC, &end);
+	if (interrupt)
+		printf("^C");
+	if (res != sizeof(buf))
+		printf("Incomplete buffer write (%d instead %d bytes)\n",
+		    res, sizeof(buf));
+	tns = (end.tv_sec - start.tv_sec) * 1000000000
+	    + end.tv_nsec - start.tv_nsec;
+	printf("\nWrote %lld Kbytes in %.3f s (%.3f KB/s)\n", i,
+	    0.000000001 * tns, i / (0.000000001 * tns));
+	interrupt = 0;
+}
+
+
+static void
 history_h(int argc, char **argv)
 {
 	int i;
@@ -1356,6 +1390,7 @@ const struct cmdswitch {
 #endif
 	CMDSW_ENTRY("cat",	more_h),
 	CMDSW_ENTRY("cd",	cd_h),
+	CMDSW_ENTRY("chargen",	chargen_h),
 	CMDSW_ENTRY("clear",	cls_h),
 	CMDSW_ENTRY("cls",	cls_h),
 	CMDSW_ENTRY("cmp",	cmp_h),
