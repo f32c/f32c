@@ -999,34 +999,49 @@ hexdump_h(int argc, char **argv)
 static void
 chargen_h(int argc, char **argv)
 {
-	int i, lno, llim = -1;
-	int64_t bytes, tns;
+	int i, c, lim = -1;
+	int64_t tns;
 	struct timespec start, end;
-	char buf[64];
+	char buf[1024];
 
 	if (argc == 2)
-		llim = atoi(argv[1]);
+		lim = atoi(argv[1]);
 
-	for (i = 0; i < sizeof(buf) - 1; i++)
-		buf[i] = ' ' + i;
-	buf[i] = 0;
+	for (i = sprintf(buf, "            Kbytes:"), c = ' ';
+	    i < sizeof(buf);) {
+		buf[i++] = c++;
+		if (c == 127)
+			c = ' ';
+		if ((i + 1) % 72 == 0) {
+			buf[i++] = '\r';
+			buf[i++] = '\n';
+		}
+	}
+	i = sizeof(buf) - 2;
+	buf[i++] = '\r';
+	buf[i++] = '\n';
 
 	clock_gettime(CLOCK_MONOTONIC, &start);
-	for (lno = 0, bytes = 0; (llim < 0 || lno < llim) && !interrupt; lno++)
-		bytes += printf("%09d:%s\n", lno, buf);
+	for (i = 0; (lim < 0 || i < lim) && !interrupt; i++) {
+		sprintf(buf, "%10d", i);
+		if (write(1, buf, sizeof(buf)) != sizeof(buf)) {
+			printf("\nIncomplete write\n");
+			break;
+		}
+	}
 	clock_gettime(CLOCK_MONOTONIC, &end);
 
 	tns = (end.tv_sec - start.tv_sec) * 1000000000
 	    + end.tv_nsec - start.tv_nsec;
 	printf("\nWrote ");
-	if (bytes < 1048576)
-		printf("%.3f K", bytes / 1024.0);
-	else if (bytes < 1073741824)
-		printf("%.3f M", bytes / 1048576.0);
+	if (i < 1024)
+		printf("%d K", i);
+	else if (i < 1024 * 1024)
+		printf("%.3f M", i / 1024.0);
 	else
-		printf("%.3f G", bytes / 1073741824.0);
+		printf("%.3f G", i / 1024.0 / 1024.0);
 	printf("bytes in %.3f s (%.3f KBytes/s)\n", 0.000000001 * tns,
-	    bytes / 1024.0 / (0.000000001 * tns));
+	    i / (0.000000001 * tns));
 }
 
 
