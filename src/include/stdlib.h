@@ -26,6 +26,8 @@
 #ifndef _STDLIB_H_
 #define	_STDLIB_H_
 
+_Noreturn void	 abort(void);
+
 double strtod(const char * __restrict, char ** __restrict);
 long strtol(const char * __restrict, char ** __restrict, int);
 long long strtoll(const char * __restrict, char ** __restrict, int);
@@ -40,6 +42,7 @@ void srand(unsigned);
 
 int abs(int) __pure2;
 int atoi(const char *);
+long atol(const char *);
 
 long labs(long) __pure2;
 

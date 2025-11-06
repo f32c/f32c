@@ -26,6 +26,16 @@
 #ifndef	_STRING_H_
 #define	_STRING_H_
 
+#ifndef _RSIZE_T_DEFINED
+#define _RSIZE_T_DEFINED
+typedef size_t rsize_t;
+#endif
+
+#ifndef _ERRNO_T_DEFINED
+#define _ERRNO_T_DEFINED
+typedef int errno_t;
+#endif
+
 char *strcat(char * __restrict, const char * __restrict);
 char *strstr(const char *, const char *) __pure;
 char *strtok(char * __restrict, const char * __restrict);
@@ -39,6 +49,7 @@ char *strncat(char * restrict, const char * restrict, size_t);
 void *memchr(const void *, int, size_t) __pure;
 void *memmove(void *, const void *, size_t);
 void *memset(void *, int, size_t);
+errno_t memset_s(void *, rsize_t, int, size_t);
 int memcmp(const void *, const void *, size_t) __pure;
 
 #define	memcpy(dst, src, len) _memcpy((dst), (src), (len))
@@ -50,7 +61,7 @@ int strcmp(const char * __restrict, const char * __restrict);
 
 
 static inline void
-bzero(void *dst, int len)
+bzero(void *dst, size_t len)
 {
 	char *cp = (char *) dst;
 

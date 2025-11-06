@@ -76,6 +76,8 @@ int	fputc(int, FILE *);
 int	putchar(int);
 int	fputs(const char *, FILE *);
 int	puts(const char *);
+size_t	fread(void * __restrict, size_t, size_t, FILE * __restrict);
+size_t	fwrite(const void * __restrict, size_t, size_t, FILE * __restrict);
 
 char	*gets_s(char *, int size);
 int	fgetc(FILE *);
