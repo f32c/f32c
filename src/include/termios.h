@@ -15,6 +15,7 @@
 #define	ICRNL		0x0100	/* map CR to NL (ala CRMOD) */
 #define	IXON		0x0200	/* enable output flow control */
 #define	IXOFF		0x0400	/* enable input flow control */
+#define	IXANY		0x0800	/* any char will restart after stop */
 
 /*
  * Control flags - hardware control of terminal
@@ -58,12 +59,15 @@
 #define	VEOF	0	/* ICANON, CTRL-D */
 #define	VEOL	1	/* ICANON */
 #define	VINTR	2	/* ISIG, CTRL+C */
-#define	VSUSP	3	/* ISIG, CTRL+Z */
+#define	VQUIT	3	/* ISIG, CTRL+\ */
+#define	VSUSP	4	/* ISIG, CTRL+Z */
 #define	VKILL	4	/* ICANON, CTRL+U */
-#define	VERASE	5	/* ICANON, CTRL-H */
-#define	VMIN	6	/* !ICANON */
-#define	VTIME	7	/* !ICANON */
-#define	NCCS	8
+#define	VERASE	6	/* ICANON, CTRL-H */
+#define	VMIN	7	/* !ICANON */
+#define	VTIME	8	/* !ICANON */
+#define	VSTART	9	/* IXON, IXOFF */
+#define	VSTOP	10	/* IXON, IXOFF */
+#define	NCCS	11
 
 struct termios {
 	uint16_t	c_iflag;	/* input config */
