@@ -77,11 +77,6 @@ struct termios {
 	uint8_t		c_cc[NCCS];	/* control chars */
 };
 
-struct winsize {
-	uint8_t		ws_row;		/* rows, in characters */
-	uint8_t		ws_col;		/* columns, in characters */
-};
-
 /*
  * Commands passed to tcsetattr() for setting the termios structure.
  */
