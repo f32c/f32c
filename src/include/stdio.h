@@ -72,10 +72,12 @@ void perror(const char *);
 FILE	*fopen(const char * restrict, const char * restrict);
 FILE	*fdopen(int, const char *);
 int	fclose(FILE *);
+int	fileno(FILE *);
 int	fputc(int, FILE *);
 int	putchar(int);
-int	fputs(const char *, FILE *);
 int	puts(const char *);
+int	fputs(const char *, FILE *);
+char 	*fgets(char * restrict, int, FILE * restrict);
 size_t	fread(void * __restrict, size_t, size_t, FILE * __restrict);
 size_t	fwrite(const void * __restrict, size_t, size_t, FILE * __restrict);
 
