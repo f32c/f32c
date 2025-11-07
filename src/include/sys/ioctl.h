@@ -2,8 +2,6 @@
 #ifndef _SYS_TERMIOS_H_
 #define _SYS_TERMIOS_H_
 
-#include <sys/_winsize.h>
-
 #define	_ioctl(fd, cmd, arg) fcntl((fd), (cmd), (arg))
 #define	ioctl(fd, cmd, arg) _ioctl((fd), (cmd), (arg))
 
