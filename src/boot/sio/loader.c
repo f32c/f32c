@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2013 - 2015 Marko Zec, University of Zagreb
+ * Copyright (c) 2013 - 2026 Marko Zec
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -21,11 +21,12 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * $Id$
  */
 
 #include <dev/io.h>
+
+#define	IO_SIO_DATA	(IO_SIO_0 + 0x0)
+#define	IO_SIO_STATUS	(IO_SIO_0 + 0x4)
 
 extern __dead2 void binboot(void);
 
@@ -37,7 +38,7 @@ extern __dead2 void binboot(void);
 		do {							\
 			INB(s, IO_SIO_STATUS);				\
 		} while (s & SIO_TX_BUSY);				\
-		OUTB(IO_SIO_BYTE, (c));					\
+		OUTB(IO_SIO_DATA, (c));					\
 	} while (0)
 
 #define	phex(c)								\
@@ -122,7 +123,7 @@ loop:
 			OUTB(IO_LED, (int) cp >> 8);
 		INB(c, IO_SIO_STATUS);
 	} while ((c & SIO_RX_FULL) == 0);
-	INB(c, IO_SIO_BYTE);
+	INB(c, IO_SIO_DATA);
 
 	if (pos < 0) {
 		if (c == 'S')

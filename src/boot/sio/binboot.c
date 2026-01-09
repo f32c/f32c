@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2015 Marko Zec, University of Zagreb
+ * Copyright (c) 2015-2026 Marko Zec
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -21,15 +21,14 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * $Id$
  */
 
 #include <dev/io.h>
 #include <dev/sio.h>
 #include <stdio.h>
 
-#include <mips/asm.h>
+#define	IO_SIO_DATA	(IO_SIO_0 + 0x0)
+#define	IO_SIO_STATUS	(IO_SIO_0 + 0x4)
 
 
 static inline void
@@ -41,7 +40,7 @@ pchar(char c)
 	do {
 		INB(s, IO_SIO_STATUS);
 	} while (s & SIO_TX_BUSY);
-	OUTB(IO_SIO_BYTE, (c));
+	OUTB(IO_SIO_DATA, (c));
 }
 
 
@@ -56,7 +55,7 @@ sio_getch_blink()
 		OUTB(IO_LED, (c >> 24));
 		INB(c, IO_SIO_STATUS);
 	} while ((c & SIO_RX_FULL) == 0);
-	INB(c, IO_SIO_BYTE);
+	INB(c, IO_SIO_DATA);
 	return (c & 0xff);
 }
 
@@ -70,7 +69,7 @@ sio_getch()
 	do {
 		INB(c, IO_SIO_STATUS);
 	} while ((c & SIO_RX_FULL) == 0);
-	INB(c, IO_SIO_BYTE);
+	INB(c, IO_SIO_DATA);
 	return (c & 0xff);
 }
 
