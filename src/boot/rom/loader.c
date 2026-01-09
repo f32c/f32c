@@ -23,11 +23,8 @@
  * SUCH DAMAGE.
  */
 
-#include <stdio.h>
-
 #include <dev/io.h>
 #include <dev/spi.h>
-#include <dev/sio.h>
 
 #define	IO_SIO_DATA	(IO_SIO_0 + 0x0)
 #define	IO_SIO_STATUS	(IO_SIO_0 + 0x4)
@@ -39,14 +36,6 @@
 #define LOADER_START    0x100200
 /* address in RAM where the FAT loader is copied from flash */
 #define	LOADER_BASE	0x800F0000
-
-#ifndef ONLY_I_ROM
-#if _BYTE_ORDER == _BIG_ENDIAN
-static const char *msg = "ULX2S ROM bootloader v 0.1 (f32c/be)\n";
-#else
-static const char *msg = "ULX2S ROM bootloader v 0.1 (f32c/le)\n";
-#endif
-#endif /* !ONLY_I_ROM */
 
 
 void sio_boot(void);
