@@ -941,7 +941,7 @@ hexdump_line(int got, int *lno, uint8_t *buf)
 		printf("|");
 	printf("\n");
 	(*lno)++;
-	if (*lno == 23) {
+	if (*lno >= 23) {
 stopped:
 		printf("-- more --");
 		i = getchar();
@@ -951,13 +951,12 @@ stopped:
 			return (-1);
 		}
 		switch(i) {
-		case 4:
 		case 'q':
 			return (-1);
 		case ' ':
 			*lno = 0;
 			break;
-		case '\r':
+		case '\n':
 		case 'j':
 			(*lno)--;
 			break;
@@ -1301,6 +1300,9 @@ flash_h(int argc, char **argv)
 	struct diskio_inst di;
 #define	FLASH_SECLEN 4096
 	uint8_t buf[FLASH_SECLEN];
+	uint8_t prev_line[16];
+	uint8_t *prev_buf;
+	int skipping = 0;
 
 	diskio_attach_flash(&di, IO_SPI_FLASH, 0, 0, 0x1000000);
 	free((void *) di.d_mntfrom);
@@ -1376,11 +1378,27 @@ flash_h(int argc, char **argv)
 		if (start < 0)
 			break;
 
+		di.d_sw->read(&di, buf, start / FLASH_SECLEN, 1);
 		do {
-			di.d_sw->read(&di, buf, start / FLASH_SECLEN, 1);
-			printf("%08x  ", start);
-			res = hexdump_line(16, &lno,
-			    &buf[start & (FLASH_SECLEN - 1)]);
+			if ((start & (FLASH_SECLEN - 1)) == 0)
+				di.d_sw->read(&di, buf,
+				    start / FLASH_SECLEN, 1);
+			if (prev_buf == NULL || memcmp(prev_line,
+			    &buf[start & (FLASH_SECLEN - 1)], 16) != 0) {
+				printf("%08x  ", start);
+				res = hexdump_line(16, &lno,
+				    &buf[start & (FLASH_SECLEN - 1)]);
+				memcpy(prev_line,
+				    &buf[start & (FLASH_SECLEN - 1)], 16);
+				prev_buf = prev_line;
+				skipping = 0;
+			} else {
+				if (!skipping) {
+					printf("*\n");
+					lno++;
+				}
+				skipping = 1;
+			}
 			start += 16;
 		} while (res == 0);
 		return;
