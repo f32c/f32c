@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2013 - 2015 Marko Zec, University of Zagreb
+ * Copyright (c) 2013 - 2026 Marko Zec
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -21,18 +21,18 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * $Id$
  */
+
+#include <stdio.h>
 
 #include <dev/io.h>
 #include <dev/spi.h>
 #include <dev/sio.h>
-#include <stdio.h>
 
+#define	IO_SIO_DATA	(IO_SIO_0 + 0x0)
+#define	IO_SIO_STATUS	(IO_SIO_0 + 0x4)
+#define	IO_SIO_BAUD	(IO_SIO_0 + 0x8)
 
-#define	SRAM_BASE	0x80000000
-#define	SRAM_TOP	0x80100000
 /* FAT start (bootsector) address in the flash image */
 #define FLASH_FAT_OFFSET 0x100000
 /* FAT loader start address in the flash image */
@@ -74,7 +74,7 @@ pchar(char c)
 	do {
 		INB(s, IO_SIO_STATUS);
 	} while (s & SIO_TX_BUSY);
-	OUTB(IO_SIO_BYTE, (c));
+	OUTB(IO_SIO_DATA, (c));
 }
 
 
@@ -129,7 +129,7 @@ sio_getch()
 	do {
 		INB(c, IO_SIO_STATUS);
 	} while ((c & SIO_RX_FULL) == 0);
-	INB(c, IO_SIO_BYTE);
+	INB(c, IO_SIO_DATA);
 	return (c & 0xff);
 }
 
@@ -240,7 +240,7 @@ main(void)
 		/* Check SIO RX buffer */
 		INB(c, IO_SIO_STATUS);
 		if (c & SIO_RX_FULL) {
-			INB(c, IO_SIO_BYTE);
+			INB(c, IO_SIO_DATA);
 			if (c == ' ') {
 				sio_boot();
 				cp = sio_load_binary();
