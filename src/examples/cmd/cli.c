@@ -593,6 +593,9 @@ static void
 mkfs_h(int argc, char **argv)
 {
 	char buf[FF_MAX_SS];
+	MKFS_PARM options = {
+		.fmt = FM_ANY| FM_SFD
+	};
 	int res;
 
 	if (argc < 2 || argv[1][1] != ':') {
@@ -600,7 +603,7 @@ mkfs_h(int argc, char **argv)
 		return;
 	}
 
-	res = f_mkfs(argv[1], 0, buf, FF_MAX_SS);
+	res = f_mkfs(argv[1], &options, buf, FF_MAX_SS);
 	if (res != FR_OK)
 		printf("Error: %d\n", res);
 }
