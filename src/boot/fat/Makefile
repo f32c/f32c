@@ -128,7 +128,7 @@ image:	loader.bin
 	  -r $(RESERVED_SECTORS) \
 	  -e $(ROOT_DIR_ENTRIES) \
 	  -n $(NUMBER_OF_FATS) \
-	    ./${SPI_IMG_NAME}
+	    ${SPI_IMG_NAME}
 	dd bs=1 if=loader.bin of=${SPI_IMG_NAME} oseek=$(LOADER_START) conv=notrunc
 	mmd -i ${SPI_IMG_NAME} ::boot
 	mmd -i ${SPI_IMG_NAME} ::demo
