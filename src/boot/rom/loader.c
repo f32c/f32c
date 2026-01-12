@@ -45,6 +45,7 @@ static void
 flash_read_block(char *buf, uint32_t addr, uint32_t len)
 {
 
+	spi_slave_select(IO_SPI_FLASH, 0);
 	spi_start_transaction(IO_SPI_FLASH);
 	spi_byte(IO_SPI_FLASH, 0x0b); /* High-speed read */
 	spi_byte(IO_SPI_FLASH, addr >> 16);
