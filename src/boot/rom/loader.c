@@ -30,19 +30,15 @@
 #define	IO_SIO_STATUS	(IO_SIO_0 + 0x4)
 #define	IO_SIO_BAUD	(IO_SIO_0 + 0x8)
 
-/* FAT start (bootsector) address in the flash image */
-#define FLASH_FAT_OFFSET 0x100000
-/* FAT loader start address in the flash image */
-#define LOADER_START    0x100200
-/* address in RAM where the FAT loader is copied from flash */
-#define	LOADER_BASE	0x800F0000
+#define	FLASH_ADDR_INC	0x00010000
+#define	FLASH_ADDR_LIM	0x00800000
 
 
 void sio_boot(void);
 
 
 static void
-flash_read_block(char *buf, uint32_t addr, uint32_t len)
+flash_read_block(uint8_t *buf, uint32_t addr, uint32_t len)
 {
 
 	spi_slave_select(IO_SPI_FLASH, 0);
@@ -190,36 +186,112 @@ sio_load_binary(void)
 }
 
 
+static int
+is_fat_volume(uint8_t *buf)
+{
+	int i, sec_size;
+
+	sec_size = (buf[0xc] << 8) + buf[0xb];
+	if (buf[0] != 0xeb || buf[2] != 0x90
+	    || buf[0x1fe] != 0x55 || buf[0x1ff] != 0xaa || sec_size != 4096)
+		return (0);
+	for (i = 0xa0; i < 0x1fe; i++)
+		if (buf[i] != 0)
+			return (0);
+	return (1);
+}
+
+
+static int
+is_f32c_exec(uint8_t *buf)
+{
+
+#if _BYTE_ORDER == _LITTLE_ENDIAN
+	if (buf[2] == 0x10 && buf[3] == 0x3c &&
+	    buf[6] == 0x10 && buf[7] == 0x26 &&
+	    buf[10] == 0x11 && buf[11] == 0x3c &&
+	    buf[14] == 0x31 && buf[7] == 0x26)
+#else
+	if (buf[2] == 0x10 && buf[3] == 0x3c &&
+	    buf[6] == 0x10 && buf[7] == 0x26 &&
+	    buf[10] == 0x11 && buf[11] == 0x3c &&
+	    buf[14] == 0x31 && buf[7] == 0x26)
+#endif
+		return (1);
+	return (0);
+}
+
+
 void
 main(void)
 {
-	uint8_t *cp = (void *) LOADER_BASE;
-	int res_sec, sec_size, len, i, c;
-
-	/* Turn off video framebuffer, just in case */
-	OUTW(IO_FB, 3);
+	uint8_t buf[512];
+	uint8_t *cp = buf;
+	int len, i, c, addr;
+	char *start, *end;
+	int16_t *shortp;
 
 	/* Reset all CPU cores except CPU #0 */
 	OUTW(IO_CPU_RESET, ~1);
 
-	flash_read_block((void *) cp, FLASH_FAT_OFFSET, 512);
-	sec_size = (cp[0xc] << 8) + cp[0xb];
-	res_sec = (cp[0xf] << 8) + cp[0xe];
-	if (cp[0x1fe] != 0x55 || cp[0x1ff] != 0xaa || sec_size != 4096
-	    /* || res_sec < 2 */ ) {
-		puts("Invalid boot sector\n");
+	for (addr = 0; addr < FLASH_ADDR_LIM; addr += FLASH_ADDR_INC) {
+		flash_read_block(cp, addr, sizeof(buf));
+		if (!is_fat_volume(cp))
+			continue;
+		puts("FAT partition found at 0x");
+		phex32(addr);
+		puts("\n");
+		flash_read_block(buf, addr + 512, 16);
+		if (is_f32c_exec(cp)) {
+			addr += 512;
+			break;
+		}
+		flash_read_block(buf, addr - FLASH_ADDR_INC, 16);
+		if (addr > 0 && is_f32c_exec(cp)) {
+			addr -= FLASH_ADDR_INC;
+			break;
+		}
+	}
+
+	if (addr == FLASH_ADDR_LIM) {
+		puts("Boot sector not found.\n");
 		sio_boot();
 		cp = sio_load_binary();
 		goto boot;
 	}
 
-	len = sec_size * res_sec - (LOADER_START - FLASH_FAT_OFFSET);
-	flash_read_block((void *) cp, LOADER_START, len);
-	puts("Boot block loaded from SPI flash at 0x");
+	puts("Boot code found at 0x");
+	phex32(addr);
+	puts("\n");
+
+#if _BYTE_ORDER == _LITTLE_ENDIAN
+	shortp = (void *) &buf[0];
+	start = (void *) (*shortp << 16);
+	shortp = (void *) &buf[4];
+	start = (void *)((int) start + *shortp);
+	shortp = (void *) &buf[8];
+	end = (void *) (*shortp << 16);
+	shortp = (void *) &buf[12];
+	end = (void *)((int) end + *shortp);
+#else
+	shortp = (void *) &buf[2];
+	start = (void *) (*shortp << 16);
+	shortp = (void *) &buf[6];
+	start = (void *)((int) start + *shortp);
+	shortp = (void *) &buf[12];
+	end = (void *) (*shortp << 16);
+	shortp = (void *) &buf[14];
+	end = (void *)((int) end + *shortp);
+#endif
+
+	len = end - start;
+	cp = (void *) start;
+	puts("Loading at 0x");
 	phex32((uint32_t) cp);
 	puts(" len 0x");
 	phex32(len);
 	puts("\n\n");
+	flash_read_block((void *) cp, addr, len);
 
 	/* Wait briefly for an interrupt char from SIO */
 	for (i = 1 << 21; i > 0; i--) {
