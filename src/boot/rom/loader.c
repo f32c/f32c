@@ -189,13 +189,13 @@ sio_load_binary(void)
 static int
 is_fat_volume(uint8_t *buf)
 {
-	int i, sec_size;
+	int i;
 
-	sec_size = (buf[0xc] << 8) + buf[0xb];
-	if (buf[0] != 0xeb || buf[2] != 0x90
-	    || buf[0x1fe] != 0x55 || buf[0x1ff] != 0xaa || sec_size != 4096)
+	if (buf[0] != 0xeb || buf[2] != 0x90 ||
+	    buf[0xb] != 0 || buf[0xc] != 0x10 ||
+	    buf[0x1fe] != 0x55 || buf[0x1ff] != 0xaa)
 		return (0);
-	for (i = 0xa0; i < 0x1fe; i++)
+	for (i = 0x92; i < 0x1fe; i++)
 		if (buf[i] != 0)
 			return (0);
 	return (1);
@@ -206,17 +206,10 @@ static int
 is_f32c_exec(uint8_t *buf)
 {
 
-#if _BYTE_ORDER == _LITTLE_ENDIAN
 	if (buf[2] == 0x10 && buf[3] == 0x3c &&
 	    buf[6] == 0x10 && buf[7] == 0x26 &&
 	    buf[10] == 0x11 && buf[11] == 0x3c &&
 	    buf[14] == 0x31 && buf[7] == 0x26)
-#else
-	if (buf[2] == 0x10 && buf[3] == 0x3c &&
-	    buf[6] == 0x10 && buf[7] == 0x26 &&
-	    buf[10] == 0x11 && buf[11] == 0x3c &&
-	    buf[14] == 0x31 && buf[7] == 0x26)
-#endif
 		return (1);
 	return (0);
 }
@@ -235,12 +228,12 @@ main(void)
 	OUTW(IO_CPU_RESET, ~1);
 
 	for (addr = 0; addr < FLASH_ADDR_LIM; addr += FLASH_ADDR_INC) {
+		pchar('.');
 		flash_read_block(cp, addr, sizeof(buf));
 		if (!is_fat_volume(cp))
 			continue;
-		puts("FAT partition found at 0x");
+		puts("\nFAT partition found at 0x");
 		phex32(addr);
-		puts("\n");
 		flash_read_block(buf, addr + 512, 16);
 		if (is_f32c_exec(cp)) {
 			addr += 512;
@@ -252,6 +245,8 @@ main(void)
 			break;
 		}
 	}
+	pchar('\r');
+	pchar('\n');
 
 	if (addr == FLASH_ADDR_LIM) {
 		puts("Boot sector not found.\n");
