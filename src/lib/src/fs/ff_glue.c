@@ -120,8 +120,8 @@ check_automount(void)
 			diskio_attach_flash(&disk_i[i],
 			    IO_SPI_FLASH, /* SPI port */
 			    0, /* SPI slave unit */
-			    1024 * 1024, /* offset from media start, bytes*/
-			    3 * 1024 * 1024 /* block size, bytes*/);
+			    -1, /* Search for FAT volume */
+			    0 /* Size not known hence zero */);
 		else if (i == 1)
 			diskio_attach_sdcard(&disk_i[i],
 			    IO_SPI_SDCARD, /* SPI port */

@@ -100,7 +100,7 @@ struct diskio_inst {
 #define	DISKIO2PRIV(d)	((void *)(d)->d_priv)
 
 void diskio_attach_generic(diskio_t);
-void diskio_attach_flash(diskio_t, uint32_t, uint8_t, uint32_t, uint32_t);
+void diskio_attach_flash(diskio_t, uint32_t, uint8_t, int, int);
 void diskio_attach_fram(diskio_t, uint32_t, uint8_t, uint32_t, uint32_t);
 void diskio_attach_ram(diskio_t, void *, uint32_t);
 void diskio_attach_sdcard(diskio_t, uint32_t, uint8_t);

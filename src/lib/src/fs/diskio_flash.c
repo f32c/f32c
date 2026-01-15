@@ -153,7 +153,7 @@ flash_init_status(diskio_t di)
 
 
 static DRESULT
-flash_read(diskio_t di,  BYTE* buf, LBA_t sector, UINT count)
+flash_read(diskio_t di, BYTE* buf, LBA_t sector, UINT count)
 {
 	struct flash_priv *priv = DISKIO2PRIV(di);
 	int addr;
@@ -352,19 +352,50 @@ flash_ioctl(diskio_t di, BYTE cmd, void* buf)
 }
 
 
+static int
+is_fat_volume(uint8_t *buf)
+{
+	int i;
+
+	if (buf[0] != 0xeb || buf[2] != 0x90 ||
+	    buf[0xb] != 0 || buf[0xc] != 0x10 ||
+	    buf[0x1fe] != 0x55 || buf[0x1ff] != 0xaa)
+		return (0);
+	for (i = 0x92; i < 0x1fe; i++)
+		if (buf[i] != 0)
+			return (0);
+	return (1);
+}
+
+
 void
 diskio_attach_flash(diskio_t di, uint32_t io_port, uint8_t io_slave,
-    uint32_t offset, uint32_t size)
+    int offset, int size)
 {
 	struct flash_priv *priv = DISKIO2PRIV(di);
+	uint8_t buf[FLASH_SECLEN];
 
-	di->d_sw = &flash_sw;
-	di->d_mntfrom = diskio_devstr("Flash@spi",
-	    (io_port - IO_SPI_0) / (IO_SPI_1 - IO_SPI_0), io_slave, offset);
 	priv->io_port = io_port;
 	priv->io_slave = io_slave;
 	priv->offset = offset / FLASH_SECLEN;
 	priv->size = size / FLASH_SECLEN;
 	priv->flags = 0;
+
+	if (offset < 0) {
+		/* Attempt to find a FAT volume record */
+		for (priv->offset = 0; priv->offset < 4096;
+		    priv->offset += 16) {
+			flash_read(di, buf, 0, 1);
+			if (is_fat_volume(buf))
+				break;
+		}
+		if (priv->offset == 4096)
+			priv->offset = priv->size = 0;
+	}
+
+	di->d_sw = &flash_sw;
+	di->d_mntfrom = diskio_devstr("Flash@spi",
+	    (io_port - IO_SPI_0) / (IO_SPI_1 - IO_SPI_0), io_slave,
+	    priv->offset * FLASH_SECLEN);
 	diskio_attach_generic(di);
 }
