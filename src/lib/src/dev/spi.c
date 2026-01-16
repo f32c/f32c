@@ -95,10 +95,12 @@ spi_block_out(int port, const void *buf, int len)
 int
 spi_byte(int port, int out)
 {
-	uint32_t in;
+	uint32_t in, lim = 2047;
 
 	SB(out, SPI_DATA, port);
 	do {
+		if (lim-- == 0)
+			return (-1);
 		LW(in, SPI_DATA, port);
 	} while ((in & SPI_READY_MASK) == 0);
 #if (_BYTE_ORDER == _LITTLE_ENDIAN)
