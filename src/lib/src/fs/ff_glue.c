@@ -32,6 +32,7 @@
 #include <fcntl.h>
 #include <stdlib.h>
 #include <string.h>
+#include <strings.h>
 
 #include <sys/file.h>
 #include <sys/stat.h>
@@ -476,4 +477,32 @@ getfsstat(struct statfs *buf, long bufsize, int mode)
 	}
 
 	return(mounts);
+}
+
+
+#include <stdio.h>
+
+int
+mkfs(const char *path, int offset, int size)
+{
+	char buf[FF_MAX_SS];
+	MKFS_PARM options = {
+		.fmt = FM_ANY| FM_SFD
+	};
+	int i, res;
+
+	for (i = 0; i < FF_VOLUMES; i++)
+		if (strncasecmp(disk_i[i].d_mnton, path, 2) == 0)
+			break;
+
+	if (i == FF_VOLUMES || size < 0)
+		return (-1);
+
+	if (i == 0)
+		diskio_attach_flash(&disk_i[i], IO_SPI_FLASH, 0, offset, size);
+	else if (i == 2)
+		diskio_attach_fram(&disk_i[i], IO_SPI_FLASH, 1, 0, 512 * 1024);
+
+	res = f_mkfs(path, &options, buf, FF_MAX_SS);
+	return (res);
 }

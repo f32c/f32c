@@ -118,5 +118,6 @@ typedef struct fhandle	fhandle_t;
 
 int	getfsstat(struct statfs *, long, int);
 int	statfs(const char *, struct statfs *);
+int	mkfs(const char *, int, int);
 
 #endif /* !_SYS_MOUNT_H_ */
