@@ -592,10 +592,6 @@ mkdir_h(int argc, char **argv)
 static void
 mkfs_h(int argc, char **argv)
 {
-	char buf[FF_MAX_SS];
-	MKFS_PARM options = {
-		.fmt = FM_ANY| FM_SFD
-	};
 	int res;
 
 	if (argc < 2 || argv[1][1] != ':') {
@@ -603,7 +599,7 @@ mkfs_h(int argc, char **argv)
 		return;
 	}
 
-	res = f_mkfs(argv[1], &options, buf, FF_MAX_SS);
+	res = mkfs(argv[1], 0x100000, 0x100000);
 	if (res != FR_OK)
 		printf("Error: %d\n", res);
 }
