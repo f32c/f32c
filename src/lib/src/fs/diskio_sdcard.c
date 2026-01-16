@@ -88,7 +88,8 @@ sdcard_cmd(struct sdcard_priv *priv, int cmd, uint32_t arg)
 	spi_start_transaction(priv->io_port);
 
 	/* Preamble */
-	spi_byte(priv->io_port, 0xff);
+	if (spi_byte(priv->io_port, 0xff) < 0)
+		return (-1);
 
 	/* Command */
 	spi_byte(priv->io_port, cmd | 0x40);
@@ -180,7 +181,9 @@ sdcard_init_x(struct sdcard_priv *priv)
 	spi_slave_select(priv->io_port, priv->io_slave);
 
 	/* Terminate current transaction, if any */
-	sdcard_cmd(priv, SD_CMD_STOP_TRANSMISSION, 0);
+	res = sdcard_cmd(priv, SD_CMD_STOP_TRANSMISSION, 0);
+	if (res < 0)
+		return (res);
 
 	/* Clock in some dummy data in an attempt to wake up the card */
 	for (i = 0; i < (1 << 16); i++)
