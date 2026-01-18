@@ -168,6 +168,7 @@ main(void)
 	}
 
 	/* Invalidate I-cache */
+#ifdef __mips__
 	for (i = 9; i < 32768; i += 4) {
 		__asm __volatile__(
 			"cache 0, 0(%0)"
@@ -175,22 +176,40 @@ main(void)
 			: "r" (RAM_BASE+i)
 		);
 	}
+#else /* riscv */
+	__asm __volatile__(
+		"fence.i;"		/* flush I-cache */
+	);
+#endif
 
 	/* Turn off video framebuffer and PCM audio DMA */
 	OUTW(IO_FB, 3);		/* framebuffer off */
 	OUTW(IO_PCM_FREQ, 0);	/* stop PCM DMA */
 	OUTW(IO_PCM_VOLUME, 0);	/* mute PCM DAC output */
 
+#ifdef __mips__
 	__asm __volatile__(
 		".set noreorder;"
 		"lui $4, 0x8000;"	/* stack mask */
 		"lui $5, 0x1000;"	/* top of the initial stack */
-                "and $29, %0, $4;"	/* clear low bits of the stack */
-                "move $31, $0;"		/* return to ROM loader when done */
+		"and $29, %0, $4;"	/* clear low bits of the stack */
+		"move $31, $0;"		/* return to ROM loader when done */
 		"jr %0;"
-		"or $29, $29, $5;"      /* set the stack pointer */
+		"or $29, $29, $5;"	/* set the stack pointer */
 		".set reorder;"
 		: 
 		: "r" (loadaddr)
 	);
+#else /* riscv */
+	__asm __volatile__(
+		"lui s0, 0x80000;"	/* stack mask */
+		"lui s1, 0x10000;"	/* top of the initial stack */
+		"and sp, %0, s0;"	/* clr low bits of the stack */
+		"or sp, sp, s1;"	/* set stack */
+		"mv ra, zero;"
+		"jr %0;"
+		:
+		: "r" (loadaddr)
+	);
+#endif
 }

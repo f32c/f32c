@@ -5,6 +5,10 @@ LOADADDR = 0x800F0000
 # No optional instructions in the loader
 MIN = true
 
+ifeq (${ARCH},riscv)
+	CFLAGS += -march=rv32imzifencei
+endif
+
 WITHOUT_FLOAT = true
 
 PROG = loader
