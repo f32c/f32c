@@ -33,9 +33,6 @@
 
 
 static const char *bootfiles[] = {
-#ifdef FRISC_LOAD
-	"D:/frisc_ld.bin",
-#endif
 	"D:/bootme.bin",
 	"/autoexec.bin",
 	"/boot/kernel",
@@ -161,14 +158,8 @@ main(void)
 		loadaddr = NULL;
 	}
 
-	for (i = 0; loadaddr == NULL && bootfiles[i] != NULL; i++) {
-#ifdef FRISC_LOAD
-		/* On FRISC systems drop to serial loader */
-		if (i)
-			OUTB(IO_CPU_RESET + 0xc, 0x1);
-#endif
+	for (i = 0; loadaddr == NULL && bootfiles[i] != NULL; i++)
 		loadaddr = load_bin(bootfiles[i], i);
-	}
 
 	if (loadaddr == NULL) {
 		*((int *) RAM_BASE) = 0;
