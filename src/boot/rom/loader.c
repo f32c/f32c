@@ -33,6 +33,8 @@
 #define	FLASH_ADDR_INC	0x00010000
 #define	FLASH_ADDR_LIM	0x00800000
 
+#define	RAM_START	0x80000000
+
 
 void sio_boot(void);
 
@@ -222,13 +224,21 @@ main(void)
 	uint8_t *cp = buf;
 	int len, i, c, addr;
 	char *start, *end;
-	int16_t *shortp;
+	int16_t *shortp = (void *) buf;
+	uint32_t *cookiep = (void *) RAM_START;
+	int verbose_boot = 1 << 21;
 
 	/* Reset all CPU cores except CPU #0 */
 	OUTW(IO_CPU_RESET, ~1);
 
+	/* Check whether there are parameters for the loader at RAM_START */
+	if (*cookiep == 0xf32cbeef)
+		verbose_boot = 0;
+	*cookiep = 0;
+
 	for (addr = 0; addr < FLASH_ADDR_LIM; addr += FLASH_ADDR_INC) {
-		pchar('.');
+		if (verbose_boot)
+			pchar('.');
 		flash_read_block(cp, addr, sizeof(buf));
 		if (!is_fat_volume(cp))
 			continue;
@@ -245,8 +255,10 @@ main(void)
 			break;
 		}
 	}
-	pchar('\r');
-	pchar('\n');
+	if (verbose_boot) {
+		pchar('\r');
+		pchar('\n');
+	}
 
 	if (addr == FLASH_ADDR_LIM) {
 		puts("Boot sector not found.\n");
@@ -255,29 +267,14 @@ main(void)
 		goto boot;
 	}
 
+#ifndef ONLY_I_ROM
 	puts("Boot code found at 0x");
 	phex32(addr);
 	puts("\n");
-
-#if _BYTE_ORDER == _LITTLE_ENDIAN
-	shortp = (void *) &buf[0];
-	start = (void *) (*shortp << 16);
-	shortp = (void *) &buf[4];
-	start = (void *)((int) start + *shortp);
-	shortp = (void *) &buf[8];
-	end = (void *) (*shortp << 16);
-	shortp = (void *) &buf[12];
-	end = (void *)((int) end + *shortp);
-#else
-	shortp = (void *) &buf[2];
-	start = (void *) (*shortp << 16);
-	shortp = (void *) &buf[6];
-	start = (void *)((int) start + *shortp);
-	shortp = (void *) &buf[12];
-	end = (void *) (*shortp << 16);
-	shortp = (void *) &buf[14];
-	end = (void *)((int) end + *shortp);
 #endif
+
+	start = (void *) ((shortp[0] << 16) + shortp[2]);
+	end = (void *) ((shortp[4] << 16) + shortp[6]);
 
 	len = end - start;
 	cp = (void *) start;
@@ -289,10 +286,8 @@ main(void)
 	flash_read_block((void *) cp, addr, len);
 
 	/* Wait briefly for an interrupt char from SIO */
-	for (i = 1 << 21; i > 0; i--) {
+	for (i = verbose_boot; i >= 0; i--) {
 		OUTB(IO_LED, i >> 13);
-		if (i > (1 << 20))
-			continue;
 
 		/* Check SIO RX buffer */
 		INB(c, IO_SIO_STATUS);
