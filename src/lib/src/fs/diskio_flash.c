@@ -107,14 +107,11 @@ flash_init_status(diskio_t di)
 	uint32_t byte;
 	DSTATUS res = 0;
 
-	/* Slave select */
-	spi_slave_select(priv->io_port, priv->io_slave);
-
 	/* Get SPI chip ID */
+	spi_slave_select(priv->io_port, priv->io_slave);
 	spi_start_transaction(priv->io_port);
 	spi_byte(priv->io_port, SPI_CMD_RDID);
 	byte = spi_byte(priv->io_port, 0);
-
 	if (byte == 0 || byte == 0xff)
 		return STA_NOINIT;
 	if (priv->jed_id[0] != 0 && priv->jed_id[0] != byte)
@@ -122,33 +119,7 @@ flash_init_status(diskio_t di)
 	priv->jed_id[0] = byte;
 	priv->jed_id[1] = spi_byte(priv->io_port, 0);
 	priv->jed_id[2] = spi_byte(priv->io_port, 0);
-
-#ifndef DISKIO_RO
-	if (res || (priv->flags & F_UNLOCK_DONE))
-		return res;
-
-	#if USE_EWSR
-	/* Enable Write Status Register */
-	spi_start_transaction(priv->io_port);
-	spi_byte(priv->io_port, SPI_CMD_EWSR);
-	#endif
-
-	#if USE_WREN_BEFORE_WRSR
-	/* Write enable */
-	spi_start_transaction(priv->io_port);
-	spi_byte(priv->io_port, SPI_CMD_WREN);
-	#endif
-
-	#if USE_WRSR
-	/* Clear write-protect bits */
-	spi_start_transaction(priv->io_port);
-	spi_byte(priv->io_port, SPI_CMD_WRSR);
-	spi_byte(priv->io_port, 0);
-	#endif
-
-	priv->flags |= F_UNLOCK_DONE;
-#endif
-	return res;
+	return (res);
 }
 
 
@@ -205,9 +176,41 @@ blank_check(struct flash_priv *priv, int addr, int len)
 
 
 static void
+flash_write_unlock(struct flash_priv *priv)
+{
+
+	if (priv->flags & F_UNLOCK_DONE)
+		return;
+
+	#if USE_EWSR
+	/* Enable Write Status Register */
+	spi_start_transaction(priv->io_port);
+	spi_byte(priv->io_port, SPI_CMD_EWSR);
+	#endif
+
+	#if USE_WREN_BEFORE_WRSR
+	/* Write enable */
+	spi_start_transaction(priv->io_port);
+	spi_byte(priv->io_port, SPI_CMD_WREN);
+	#endif
+
+	#if USE_WRSR
+	/* Clear write-protect bits */
+	spi_start_transaction(priv->io_port);
+	spi_byte(priv->io_port, SPI_CMD_WRSR);
+	spi_byte(priv->io_port, 0);
+	#endif
+
+	priv->flags |= F_UNLOCK_DONE;
+}
+
+
+static void
 flash_erase_sectors(struct flash_priv *priv, int start, int cnt)
 {
 	int addr, step, flags;
+
+	flash_write_unlock(priv);
 
 	addr = start * FLASH_SECLEN;
 	for (; cnt > 0; cnt -= step, addr += step * FLASH_SECLEN) {
