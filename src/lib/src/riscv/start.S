@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2013-2024 Marko Zec
+ * Copyright (c) 2013 - 2026 Marko Zec
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -40,9 +40,13 @@
 _start:
 	.option norelax
 	/* Magic block required by the bootloader, otherwise harmless */
-	la	s0, _start	/* Executable code base address */
-	la	s1, _end	/* End of BSS section, word aligned */
-	la	s0, __bss_start	/* Start of BSS section, NOT word aligned */
+	lui	zero, 0xf32c0	/* f32c cookie */
+	lui	s0, %hi(_start)	/* Executable code base address, absolute */
+	addi	s0, s0, %lo(_start)
+	lui	s0, %hi(__bss_start) /* Start of BSS section, absolute */
+	addi	s0, s0, %lo(__bss_start) /* NOT word aligned */
+	lui	s1, %hi(_end)	/* End of BSS section, absolute */
+	addi	s1, s1, %lo(_end) /* word aligned */
 	la	gp, __global_pointer$
 	la	tp, thread0
 	.option relax
