@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2013, 2014 Marko Zec, University of Zagreb
+ * Copyright (c) 2013 - 2026 Marko Zec
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -21,28 +21,22 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * $Id$
  */
 
 #include <fcntl.h>
 #include <stdio.h>
-#include <string.h>
 #include <unistd.h>
 #include <dev/io.h>
 
 
 static const char *bootfiles[] = {
-	"D:/bootme.bin",
-	"/autoexec.bin",
-	"/boot/kernel",
-	"/boot/basic.bin",
+	"/boot.bin",
+	"/boot/cmd.bin",
 	NULL
 };
 
 
 #define	RAM_BASE	0x80000000
-#define	RAM_TOP		0x82000000
 
 #define LOAD_COOKIE	0x10adc0de
 
@@ -50,12 +44,16 @@ static const char *bootfiles[] = {
 static char *
 load_bin(const char *fname, int verbose)
 {
-	uint8_t hdrbuf[16];
-	int16_t *shortp;
+	uint8_t hdrbuf[32];
 	int fd;
 	int i;
 	char *cp;
-	char *start, *end;
+	char *start, *bss, *end;
+#ifdef __mips__
+	int16_t *shortp = (void *) hdrbuf;
+#else
+	int32_t *longp = (void *) hdrbuf;
+#endif
 
 	if (verbose)
 		printf("Trying %s... ", fname);
@@ -66,48 +64,33 @@ load_bin(const char *fname, int verbose)
 		return (NULL);
 	}
 
-	i = read(fd, hdrbuf, 16);
+	i = read(fd, hdrbuf, sizeof(hdrbuf));
 	close(fd);
-	if (i != 16) {
+	if (i != sizeof(hdrbuf)) {
 		printf("short read\n");
 		return (NULL);
 	};
 
+#ifdef __mips__
 	if (hdrbuf[2] == 0x10 && hdrbuf[3] == 0x3c &&
 	    hdrbuf[6] == 0x10 && hdrbuf[7] == 0x26 &&
 	    hdrbuf[10] == 0x11 && hdrbuf[11] == 0x3c &&
 	    hdrbuf[14] == 0x31 && hdrbuf[7] == 0x26) {
 		/* Little-endian cookie found */
-#if _BYTE_ORDER == _LITTLE_ENDIAN
-		shortp = (void *) &hdrbuf[0];
-		start = (void *) (*shortp << 16);
-		shortp = (void *) &hdrbuf[4];
-		start = (void *)((int) start + *shortp);
-		shortp = (void *) &hdrbuf[8];
-		end = (void *) (*shortp << 16);
-		shortp = (void *) &hdrbuf[12];
-		end = (void *)((int) end + *shortp);
-#else
-		printf("little-endian code, but CPU is big-endian\n");
-		return (NULL);
-#endif
-	} else if (hdrbuf[2] == 0x10 && hdrbuf[3] == 0x3c &&
-	    hdrbuf[6] == 0x10 && hdrbuf[7] == 0x26 &&
-	    hdrbuf[10] == 0x11 && hdrbuf[11] == 0x3c &&
-	    hdrbuf[14] == 0x31 && hdrbuf[7] == 0x26) {
-		/* Big-endian cookie found */
-#if _BYTE_ORDER == _BIG_ENDIAN
-		shortp = (void *) &hdrbuf[2];
-		start = (void *) (*shortp << 16);
-		shortp = (void *) &hdrbuf[6];
-		start = (void *)((int) start + *shortp);
-		shortp = (void *) &hdrbuf[12];
-		end = (void *) (*shortp << 16);
-		shortp = (void *) &hdrbuf[14];
-		end = (void *)((int) end + *shortp);
-#else
-		printf("big-endian code, but CPU is little-endian\n");
-		return (NULL);
+		start = (void *) ((shortp[0] << 16) + shortp[2]);
+		end = (void *) ((shortp[4] << 16) + shortp[6]);
+		bss = (void *) ((shortp[8] << 16) + shortp[10]);
+#else /* !__mips__ */
+	if (longp[0] == 0xf32c0037 &&
+	    hdrbuf[4] == 0x37 && (hdrbuf[5] & 0xf) == 0x4 &&
+	    hdrbuf[8] == 0x13 && hdrbuf[9] == 0x04 &&
+	    hdrbuf[12] == 0x37 && (hdrbuf[13] & 0xf) == 0x4 &&
+	    hdrbuf[16] == 0x13 && hdrbuf[17] == 0x04 &&
+	    hdrbuf[20] == 0xb7 && (hdrbuf[21] & 0xf) == 0x4 &&
+	    hdrbuf[24] == 0x93 && hdrbuf[25] == 0x84) {
+		start = (void *) ((longp[1] & 0xfffff000) + (longp[2] >> 20));
+		bss = (void *) ((longp[3] & 0xfffff000) + (longp[4] >> 20));
+		end = (void *) ((longp[5] & 0xfffff000) + (longp[6] >> 20));
 #endif
 	} else {
 		printf("invalid file type, missing header cookie\n");
@@ -119,17 +102,17 @@ load_bin(const char *fname, int verbose)
 	do {
 		i = read(fd, cp, 65536);
 		cp += i;
-		if (cp > end) {
-			printf("corrupt text file, aborting\n");
-			return (NULL);
-		}
-	} while (i > 0);
+	} while (i > 0 && cp < bss);
 	close(fd);
 	
+	if (cp != bss) {
+		printf("corrupt text file, aborting\n");
+		return (NULL);
+	}
+
 	if (verbose)
-		printf("OK\nLoaded text & data at %p;"
-		    " bss starts at %p len %p\n\n",
-		    start, cp, (void *) (end - cp));
+		printf("OK\nLoaded text & data at %p; bss at %p len %p\n\n",
+		    start, bss, (void *) (end - bss));
 
 	return (start);
 }
@@ -141,25 +124,25 @@ main(void)
 	int i;
 	char *loadaddr = (void *) RAM_BASE;
 
-	/* Dummy open, just to force-mount SD card */
-	i = open("d:", O_RDONLY);
-	close(i);
-
 	if (*((int *) loadaddr) == LOAD_COOKIE)
 		loadaddr = load_bin(&loadaddr[4], 0);
 	else {
-		printf("ULX2S FAT bootloader v 0.4 "
+		printf("f32c FAT bootloader v 0.5 "
+#ifdef __mips__
 #if _BYTE_ORDER == _BIG_ENDIAN
-		    "(f32c/be)"
+		    "(mips/be)"
 #else
-		    "(f32c/le)"
+		    "(mips/le)"
+#endif
+#else /* !__mips__ */
+		    "(riscv)"
 #endif
 		    " (built " __DATE__ ")\n");
 		loadaddr = NULL;
 	}
 
 	for (i = 0; loadaddr == NULL && bootfiles[i] != NULL; i++)
-		loadaddr = load_bin(bootfiles[i], i);
+		loadaddr = load_bin(bootfiles[i], 1);
 
 	if (loadaddr == NULL) {
 		*((int *) RAM_BASE) = 0;
