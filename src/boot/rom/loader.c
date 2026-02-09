@@ -207,11 +207,22 @@ is_fat_volume(uint8_t *buf)
 static int
 is_f32c_exec(uint8_t *buf)
 {
+	int32_t *longp = (void *) buf;
 
+#ifdef __mips__
 	if (buf[2] == 0x10 && buf[3] == 0x3c &&
 	    buf[6] == 0x10 && buf[7] == 0x26 &&
 	    buf[10] == 0x11 && buf[11] == 0x3c &&
-	    buf[14] == 0x31 && buf[7] == 0x26)
+	    buf[14] == 0x31 && buf[15] == 0x26)
+#else /* riscv */
+	if (longp[0] == 0xf32c0037 &&
+	    buf[4] == 0x37 && (buf[5] & 0xf) == 0x4 &&
+	    buf[8] == 0x13 && buf[9] == 0x04 &&
+	    buf[12] == 0x37 && (buf[13] & 0xf) == 0x4 &&
+	    buf[16] == 0x13 && buf[17] == 0x04 &&
+	    buf[20] == 0xb7 && (buf[21] & 0xf) == 0x4 &&
+	    buf[24] == 0x93 && buf[25] == 0x84)
+#endif
 		return (1);
 	return (0);
 }
@@ -224,9 +235,13 @@ main(void)
 	uint8_t *cp = buf;
 	int len, i, c, addr;
 	char *start, *end;
-	int16_t *shortp = (void *) buf;
 	uint32_t *cookiep = (void *) RAM_START;
 	int verbose_boot = 1 << 21;
+#ifdef __mips__
+	int16_t *shortp = (void *) buf;
+#else /* riscv */
+	int32_t *longp = (void *) buf;
+#endif
 
 	/* Reset all CPU cores except CPU #0 */
 	OUTW(IO_CPU_RESET, ~1);
@@ -244,12 +259,12 @@ main(void)
 			continue;
 		puts("\nFAT partition found at 0x");
 		phex32(addr);
-		flash_read_block(buf, addr + 512, 16);
+		flash_read_block(buf, addr + 512, 32);
 		if (is_f32c_exec(cp)) {
 			addr += 512;
 			break;
 		}
-		flash_read_block(buf, addr - FLASH_ADDR_INC, 16);
+		flash_read_block(buf, addr - FLASH_ADDR_INC, 32);
 		if (addr > 0 && is_f32c_exec(cp)) {
 			addr -= FLASH_ADDR_INC;
 			break;
@@ -273,8 +288,13 @@ main(void)
 	puts("\n");
 #endif
 
+#ifdef __mips__
 	start = (void *) ((shortp[0] << 16) + shortp[2]);
 	end = (void *) ((shortp[4] << 16) + shortp[6]);
+#else /* riscv */
+	start = (void *) ((longp[1] & 0xfffff000) + (longp[2] >> 20));
+	end = (void *) ((longp[3] & 0xfffff000) + (longp[4] >> 20));
+#endif
 
 	len = end - start;
 	cp = (void *) start;
