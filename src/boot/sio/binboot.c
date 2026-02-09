@@ -136,8 +136,9 @@ binboot(void)
 			);
 #else /* riscv */
 			__asm __volatile__(
-			"lui s0, 0x8000;"	/* stack mask */
-			"lui s1, 0x1000;"	/* top of the initial stack */
+			"fence.i;"		/* flush I-cache */
+			"lui s0, 0x80000;"	/* stack mask */
+			"lui s1, 0x10000;"	/* top of the initial stack */
 			"and sp, %0, s0;"	/* clr low bits of the stack */
 			"or sp, sp, s1;"	/* set stack */
 			"mv ra, zero;"		/* ra <- zero */
