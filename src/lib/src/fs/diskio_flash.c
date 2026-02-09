@@ -202,6 +202,7 @@ flash_write_unlock(struct flash_priv *priv)
 	#endif
 
 	priv->flags |= F_UNLOCK_DONE;
+	busy_wait(priv);
 }
 
 
