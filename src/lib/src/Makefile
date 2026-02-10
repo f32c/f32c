@@ -113,6 +113,7 @@ ifeq ($(LIB),c)
  endif
  ifneq ($(INT_LIBC),true)
   CFILES += float/adddf3.c float/addsf3.c float/ashldi3.c float/clzsi2.c \
+	float/clzdi2.c \
 	float/comparedf2.c float/comparesf2.c float/divdf3.c float/divsf3.c \
 	float/extendsfdf2.c float/extendhfsf2.c float/floatdisf.c \
 	float/fixdfsi.c float/fixsfsi.c float/fixunsdfdi.c \
