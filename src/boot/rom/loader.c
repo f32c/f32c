@@ -207,7 +207,9 @@ is_fat_volume(uint8_t *buf)
 static int
 is_f32c_exec(uint8_t *buf)
 {
+#ifdef __riscv
 	int32_t *longp = (void *) buf;
+#endif
 
 #ifdef __mips__
 	if (buf[2] == 0x10 && buf[3] == 0x3c &&
