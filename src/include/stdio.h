@@ -69,7 +69,7 @@ char *strerror(int);
 int strerror_r(int, char *, size_t);
 void perror(const char *);
 
-FILE	*fopen(const char * restrict, const char * restrict);
+FILE	*fopen(const char * __restrict, const char * __restrict);
 FILE	*fdopen(int, const char *);
 int	fclose(FILE *);
 int	fileno(FILE *);
@@ -77,7 +77,7 @@ int	fputc(int, FILE *);
 int	putchar(int);
 int	puts(const char *);
 int	fputs(const char *, FILE *);
-char 	*fgets(char * restrict, int, FILE * restrict);
+char 	*fgets(char * __restrict, int, FILE * __restrict);
 size_t	fread(void * __restrict, size_t, size_t, FILE * __restrict);
 size_t	fwrite(const void * __restrict, size_t, size_t, FILE * __restrict);
 
@@ -85,8 +85,8 @@ char	*gets_s(char *, int size);
 int	fgetc(FILE *);
 #define	getc(f) fgetc(f)
 #define	getchar() getc(stdin)
-ssize_t getdelim(char ** restrict, size_t * restrict, int,  FILE * restrict);
-ssize_t getline(char ** restrict, size_t * restrict, FILE * restrict);
+ssize_t getdelim(char ** __restrict, size_t * __restrict, int,  FILE * __restrict);
+ssize_t getline(char ** __restrict, size_t * __restrict, FILE * __restrict);
 
 int	rename(const char *, const char *);
 
