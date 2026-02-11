@@ -78,8 +78,9 @@ ifeq ($(LIB),c)
   ASFILES = ${ARCH}/setjmp.S ${ARCH}/exception.S
  endif
 
- CFILES += gen/assert.c gen/ctzsi2.c gen/div.c gen/div64.c gen/ffssi2.c \
-	gen/isatty.c gen/mul.c gen/termios.c
+ include builtins/Makefile.inc
+
+ CFILES += gen/mul.c gen/assert.c gen/isatty.c gen/termios.c
 
  CFILES += dev/sio.c dev/spi.c
 
@@ -112,18 +113,7 @@ ifeq ($(LIB),c)
   LIB = cint
  endif
  ifneq ($(INT_LIBC),true)
-  CFILES += float/adddf3.c float/addsf3.c float/ashldi3.c float/clzsi2.c \
-	float/clzdi2.c \
-	float/comparedf2.c float/comparesf2.c float/divdf3.c float/divsf3.c \
-	float/extendsfdf2.c float/extendhfsf2.c float/floatdisf.c \
-	float/fixdfsi.c float/fixsfsi.c float/fixunsdfdi.c \
-	float/fixunsdfsi.c float/fixunssfsi.c float/floatsidf.c \
-	float/floatsisf.c float/floatundidf.c float/floatundisf.c \
-	float/floatunsidf.c float/floatunsisf.c float/lshrdi3.c \
-	float/muldf3.c float/mulsf3.c float/negdf2.c float/negsf2.c \
-	float/subdf3.c float/subsf3.c float/truncdfsf2.c float/fixdfdi.c \
-	float/ashrdi3.c float/floatdidf.c \
-	math/isnan.c math/isinf.c math/isfinite.c
+  CFILES += math/isnan.c math/isinf.c math/isfinite.c
  endif
 endif
 

@@ -38,6 +38,7 @@ __mulsi3(uint32_t a, uint32_t b)
 }
  
 
+#if 0 /* XXX provided by LLVM builtins implementation */
 uint64_t
 __muldi3(uint64_t a, uint64_t b)
 {
@@ -48,3 +49,4 @@ __muldi3(uint64_t a, uint64_t b)
 			res += a;
 	return (res);
 }
+#endif
