@@ -8,8 +8,8 @@ TARGET_ARCH="mips riscv32"
 
 GNU_MIRROR=https://ftp.gnu.org/gnu
 
-BINUTILS_URL=${GNU_MIRROR}/binutils/binutils-2.44.tar.xz
-GCC_URL=${GNU_MIRROR}/gcc/gcc-15.1.0/gcc-15.1.0.tar.xz
+BINUTILS_URL=${GNU_MIRROR}/binutils/binutils-2.45.tar.xz
+GCC_URL=${GNU_MIRROR}/gcc/gcc-15.2.0/gcc-15.2.0.tar.xz
 
 BINUTILS_SRC_DIR=~/github/gnu/binutils
 GCC_SRC_DIR=~/github/gnu/gcc
