@@ -100,10 +100,12 @@ int atexit(void (*)(void));
 
 #define	RAND_MAX	0x7fffffff
 
+int	clearenv(void);
+int	putenv(char *);
 char	*getenv(const char *);
 
 /* XXX exit() works only on CPU #0 - fixme! */
-_Noreturn static inline void
+_Noreturn inline void
 exit(int x __unused)
 {
 
