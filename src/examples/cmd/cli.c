@@ -1370,11 +1370,17 @@ flash_h(int argc, char **argv)
 {
 	int fd, start, len, res, lno = 0;
 	struct diskio_inst di;
-	uint8_t buf[FLASH_SECLEN];
-	LBA_t *sec = (void *) buf;
 	uint8_t prev_line[16];
 	uint8_t *prev_buf;
-	int skipping = 0;
+	int i, skipping = 0;
+	uint32_t bufsiz = FLASH_SECLEN * 16;
+	uint8_t *buf = malloc(bufsiz);
+	LBA_t *sec = (void *) buf;
+
+	if (buf == NULL) {
+		printf("malloc() failed\n");
+		return;
+	}
 
 	diskio_attach_flash(&di, IO_SPI_FLASH, 0, 0, 0x1000000);
 	free((void *) di.d_mntfrom);
@@ -1390,20 +1396,19 @@ flash_h(int argc, char **argv)
 		if ((start & (FLASH_SECLEN - 1)) != 0) {
 			printf("%08x (%d) is not sector aligned\n",
 			    start, start);
-			return;
+			goto buf_cleanup;
 		}
 
 		fd = open(argv[2], O_CREAT | O_RDWR, 0777);
 		if (fd < 0) {
 			printf("Can't create %s\n", argv[2]);
-			return;
+			goto buf_cleanup;
 		}
 
-		for (start /= FLASH_SECLEN; len > 0;
-		    len -= FLASH_SECLEN, start++) {
-			di.d_sw->read(&di, buf, start, 1);
-			if (len >= FLASH_SECLEN)
-				res = write(fd, buf, FLASH_SECLEN);
+		for (; len > 0; len -= bufsiz, start += bufsiz / FLASH_SECLEN) {
+			di.d_sw->read(&di, buf, start, bufsiz / FLASH_SECLEN);
+			if (len >= bufsiz)
+				res = write(fd, buf, bufsiz);
 			else
 				res = write(fd, buf, len);
 			if (res <= 0) {
@@ -1412,7 +1417,7 @@ flash_h(int argc, char **argv)
 			}
 		}
 		close(fd);
-		return;
+		goto buf_cleanup;
 	case 'w':
 		if (argc < 4)
 			break;
@@ -1422,26 +1427,26 @@ flash_h(int argc, char **argv)
 		if ((start & (FLASH_SECLEN - 1)) != 0) {
 			printf("%08x (%d) is not sector aligned\n",
 			    start, start);
-			return;
+			goto buf_cleanup;
 		}
 
 		fd = open(argv[2], O_RDONLY);
 		if (fd < 0) {
 			printf("Can't open %s\n", argv[2]);
-			return;
+			goto buf_cleanup;
 		}
-
-		for (start /= FLASH_SECLEN, len = 0;; start++, len += res) {
-			res = read(fd, buf, FLASH_SECLEN);
+		printf("Writing...");
+		for (len = 0, i = 0;; start += res / FLASH_SECLEN, len += res) {
+			printf("%c\b", "|/-\\"[i++ & 0x3]);
+			res = read(fd, buf, bufsiz);
 			if (res <= 0)
 				break;
-			if (res < FLASH_SECLEN)
-				memset(&buf[res], 0xff, FLASH_SECLEN - res);
-			di.d_sw->write(&di, buf, start, 1);
-			printf("\r%c", "|/-\\"[start & 0x3]);
+			while ((res & (FLASH_SECLEN - 1)) != 0)
+				buf[res++] = 0xff;
+			di.d_sw->write(&di, buf, start, res / FLASH_SECLEN);
 		}
-		printf("\nWrote %d bytes\n", len);
-		return;
+		printf(" \nWrote %d bytes\n", len);
+		goto buf_cleanup;
 	case 'e':
 		if (argc < 4)
 			break;
@@ -1452,19 +1457,28 @@ flash_h(int argc, char **argv)
 		if ((start & (FLASH_SECLEN - 1)) != 0) {
 			printf("%08x (%d) is not sector aligned\n",
 			    start, start);
-			return;
+			goto buf_cleanup;
 		}
 		if ((len & (FLASH_SECLEN - 1)) != 0) {
 			printf("%08x (%d) is not sector aligned\n",
 			    len, len);
-			return;
+			goto buf_cleanup;
 		}
-		sec[0] = start / FLASH_SECLEN;
-		sec[1] = (start + len) / FLASH_SECLEN - 1;
 		printf("Erasing...");
-		di.d_sw->ioctl(&di, CTRL_TRIM, buf);
-		printf("\nDone\n");
-		return;
+		for (i = 0; len > 0;) {
+			printf("%c\b", "|/-\\"[i++ & 0x3]);
+			sec[0] = start / FLASH_SECLEN;
+			sec[1] = (start + len) / FLASH_SECLEN - 1;
+			if (len > FLASH_SECLEN * 64) {
+				sec[1] = start / FLASH_SECLEN + 63;
+				start += 64 * FLASH_SECLEN;
+				len -= 64 * FLASH_SECLEN;
+			} else
+				len = 0;
+			di.d_sw->ioctl(&di, CTRL_TRIM, buf);
+		} while (len > 0);
+		printf(" \nDone\n");
+		goto buf_cleanup;
 	case 'd':
 	case 'x':
 		if (argc < 2)
@@ -1500,11 +1514,12 @@ flash_h(int argc, char **argv)
 			}
 			start += 16;
 		} while (res == 0);
-		return;
+		goto buf_cleanup;
 	default:
 	}
-
 	printf("Invalid arguments\n");
+buf_cleanup:
+	free(buf);
 }
 #endif
 
