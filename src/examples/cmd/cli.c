@@ -1436,15 +1436,15 @@ flash_h(int argc, char **argv)
 			goto buf_cleanup;
 		}
 		printf("Writing...");
-		for (len = 0, i = 0;; start += res / FLASH_SECLEN, len += res) {
+		for (start /= FLASH_SECLEN, i = 0, len = 0;;
+		    start += res / FLASH_SECLEN, len += res) {
 			printf("%c\b", "|/-\\"[i++ & 0x3]);
 			res = read(fd, buf, bufsiz);
 			if (res <= 0)
 				break;
 			while ((res & (FLASH_SECLEN - 1)) != 0)
 				buf[res++] = 0xff;
-			di.d_sw->write(&di, buf, start / FLASH_SECLEN,
-			    res / FLASH_SECLEN);
+			di.d_sw->write(&di, buf, start, res / FLASH_SECLEN);
 		}
 		printf(" \nWrote %d bytes\n", len);
 		goto buf_cleanup;
