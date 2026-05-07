@@ -1443,7 +1443,8 @@ flash_h(int argc, char **argv)
 				break;
 			while ((res & (FLASH_SECLEN - 1)) != 0)
 				buf[res++] = 0xff;
-			di.d_sw->write(&di, buf, start, res / FLASH_SECLEN);
+			di.d_sw->write(&di, buf, start / FLASH_SECLEN,
+			    res / FLASH_SECLEN);
 		}
 		printf(" \nWrote %d bytes\n", len);
 		goto buf_cleanup;
