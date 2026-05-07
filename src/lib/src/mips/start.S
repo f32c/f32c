@@ -62,7 +62,7 @@ _start:
 	j	bss_bzero_enter
 	.set noreorder
 bss_bzero_loop:
-	sb	zero, (s0)
+	sb	zero, -1(s0)
 bss_bzero_enter:
 	bne	s0, s1, bss_bzero_loop
 	addiu	s0, s0, 1
