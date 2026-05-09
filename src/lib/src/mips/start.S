@@ -45,15 +45,20 @@
 
 _start:
 	/* Magic block required by the bootloader, otherwise harmless */
+	lui	zero, 0xf32c	/* Signature cookie */
 	la	s0, _start	/* Executable code base address */
-	la	s1, _end	/* End of BSS section, word aligned */
-	la	s0, __bss_start	/* Start of BSS section, NOT word aligned */
 
-	/* Set global and thread pointers */
-	la	gp, _gp	
+	/* Set thread pointer */
 	la	k1, thread0
 
-	/* Save argc, argv, envp */
+	/* BSS ssection bounds */
+	la	s0, __bss_start	/* Start of BSS section, NOT word aligned */
+	la	s1, _end	/* End of BSS section, word aligned */
+
+	/* Set global pointer */
+	la	gp, _gp	
+
+	/* Save argc, argv, envp; ra saved later in a branch delay slot */
 	move	s4, a0
 	move	s5, a1
 	move	s6, a2
@@ -89,6 +94,7 @@ ctor_loop_enter:
 	move	a2, s6
 	move	ra, s7
 
+	/* Done, jump into main */
 	j	main
 	addiu	sp, sp, -16 /* Guard space where main() may store a0, a1, a2 */
 	.set reorder

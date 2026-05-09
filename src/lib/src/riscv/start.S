@@ -38,20 +38,23 @@
 	.type _start,@function
 
 _start:
-	.option norelax
 	/* Magic block required by the bootloader, otherwise harmless */
 	lui	zero, 0xf32c0	/* f32c cookie */
 	lui	s0, %hi(_start)	/* Executable code base address, absolute */
 	addi	s0, s0, %lo(_start)
+
+	/* Set thread pointer */
+	lui	tp, %hi(thread0)
+	addi	tp, s0, %lo(thread0)
+
+	/* BSS ssection bounds */
 	lui	s0, %hi(__bss_start) /* Start of BSS section, absolute */
 	addi	s0, s0, %lo(__bss_start) /* NOT word aligned */
 	lui	s1, %hi(_end)	/* End of BSS section, absolute */
 	addi	s1, s1, %lo(_end) /* word aligned */
-	.option relax
 
-	/* Set global and thread pointers */
+	/* Set global pointer */
 	la	gp, __global_pointer$
-	la	tp, thread0
 
 	/* Save argc, argv, envp, ra */
 	move	s4, a0
@@ -82,11 +85,11 @@ ctor_loop:
 ctor_loop_enter:
 	bne	s0, s1,	ctor_loop
 
-	/* Restore argc, argv, envp */
+	/* Restore argc, argv, envp, ra */
 	move	a0, s4
 	move	a1, s5
 	move	a2, s6
+	move	ra, s7
 
 	/* Done, jump into main */
-	move	ra, s7
 	j	main
