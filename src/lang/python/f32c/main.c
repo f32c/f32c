@@ -58,26 +58,42 @@ int trapped;
 int edit(int promptlen, int fi, int maxlin);
 
 
+#ifndef MICROPY_REPL_PIN
+#define MICROPY_REPL_PIN	"1234"
+#endif
+
 int main(int argc, char **argv) {
     char line[1024];
     int pos;
+    int auth_ok = 0;
 
     mp_init();
+
+    /* Require PIN before allowing REPL access */
+    while (!auth_ok) {
+	trapped = 0;
+	linebuf = line;
+	snprintf(line, sizeof(line), "PIN:");
+	edit(4, 4, 256);
+	memmove(linebuf, linebuf + 4, strlen(linebuf + 4) + 1);
+	if (!trapped && strcmp(line, MICROPY_REPL_PIN) == 0)
+		auth_ok = 1;
+    }
 
     for (;;) {
 	trapped = 0;
 	linebuf = line;
-	sprintf(line, ">>> ");
+	snprintf(line, sizeof(line), ">>> ");
 	edit(4, 4, 256);
-	strcpy(linebuf, &linebuf[4]);
+	memmove(linebuf, linebuf + 4, strlen(linebuf + 4) + 1);
 	if (trapped)
 		continue;
 	pos = strlen(line);
         while (mp_repl_continue_with_input(line)) {
 	    linebuf = &line[pos];
-	    sprintf(linebuf, "... ");
+	    snprintf(linebuf, sizeof(line) - pos, "... ");
 	    edit(4, 4, 256);
-	    strcpy(linebuf, &linebuf[4]);
+	    memmove(linebuf, linebuf + 4, strlen(linebuf + 4) + 1);
 	    if (trapped || line[pos] == 0)
 		break;
 	    pos = strlen(line);
