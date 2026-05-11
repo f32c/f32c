@@ -219,15 +219,19 @@ is_fat_volume(uint8_t *buf)
 static int
 is_f32c_exec(uint8_t *buf)
 {
-#ifdef __riscv
 	int32_t *longp = (void *) buf;
+#ifdef __mips__
+	int16_t *shortp = (void *) buf;
 #endif
 
+pchar('\n');
+phex32((uint32_t) buf);
 #ifdef __mips__
-	if (buf[2] == 0x10 && buf[3] == 0x3c &&
-	    buf[6] == 0x10 && buf[7] == 0x26 &&
-	    buf[10] == 0x11 && buf[11] == 0x3c &&
-	    buf[14] == 0x31 && buf[15] == 0x26)
+	if (longp[0] == 0x3c00f32c &&
+	    shortp[3] == 0x3c10 && shortp[5] == 0x2610 &&
+	    shortp[7] == 0x3c1b && shortp[9] == 0x277b &&
+	    shortp[11] == 0x3c10 && shortp[13] == 0x2610 &&
+	    shortp[15] == 0x3c11 && shortp[17] == 0x2631)
 #else /* riscv */
 	if (longp[0] == 0xf32c0037 &&
 	    buf[4] == 0x37 && (buf[5] & 0xf) == 0x4 &&
@@ -267,23 +271,16 @@ main(void)
 	for (addr = 0; addr < FLASH_ADDR_LIM; addr += FLASH_ADDR_INC) {
 		if (verbose_boot)
 			pchar('.');
-		flash_read_block(cp, addr, sizeof(buf));
-		if (!is_fat_volume(cp))
+		flash_read_block(buf, addr, sizeof(buf));
+		if (!is_fat_volume(buf))
 			continue;
 		puts("\nFAT partition found at 0x");
 		phex32(addr);
 
 		/* Check for boot code in front of the FAT partition */
-		flash_read_block(buf, addr - FLASH_ADDR_INC, 32);
-		if (addr > 0 && is_f32c_exec(cp)) {
+		flash_read_block(buf, addr - FLASH_ADDR_INC, 40);
+		if (addr > 0 && is_f32c_exec(buf)) {
 			addr -= FLASH_ADDR_INC;
-			break;
-		}
-
-		/* Legacy: check for boot code inside the FAT partition */
-		flash_read_block(buf, addr + 512, 32);
-		if (is_f32c_exec(cp)) {
-			addr += 512;
 			break;
 		}
 	}
@@ -307,11 +304,11 @@ main(void)
 #endif
 
 #ifdef __mips__
-	start = (void *) ((shortp[0] << 16) + shortp[2]);
-	end = (void *) ((shortp[4] << 16) + shortp[6]);
+	start = (void *) ((shortp[2] << 16) + shortp[4]);
+	end = (void *) ((shortp[14] << 16) + shortp[16]);
 #else /* riscv */
 	start = (void *) ((longp[1] & 0xfffff000) + (longp[2] >> 20));
-	end = (void *) ((longp[3] & 0xfffff000) + (longp[4] >> 20));
+	end = (void *) ((longp[7] & 0xfffff000) + (longp[8] >> 20));
 #endif
 
 	len = end - start;
