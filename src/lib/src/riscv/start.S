@@ -46,7 +46,7 @@ _start:
 
 	/* Set thread pointer */
 	lui	tp, %hi(thread0)
-	addi	tp, s0, %lo(thread0)
+	addi	tp, tp, %lo(thread0)
 
 	/* BSS ssection bounds */
 	lui	s0, %hi(__bss_start) /* Start of BSS section, absolute */
