@@ -48,16 +48,15 @@ static const char *bootfiles[] = {
 static char *
 load_bin(const char *fname, int verbose)
 {
-	uint8_t hdrbuf[32];
+	uint8_t hdrbuf[40];
 	int fd;
 	int i;
 	char *cp;
 	uint32_t entry, tsiz, dsiz;
 	char *start, *bss, *end;
+	int32_t *longp = (void *) hdrbuf;
 #ifdef __mips__
 	int16_t *shortp = (void *) hdrbuf;
-#else
-	int32_t *longp = (void *) hdrbuf;
 #endif
 
 	if (verbose)
@@ -94,14 +93,15 @@ load_bin(const char *fname, int verbose)
 	};
 
 #ifdef __mips__
-	if (hdrbuf[2] == 0x10 && hdrbuf[3] == 0x3c &&
-	    hdrbuf[6] == 0x10 && hdrbuf[7] == 0x26 &&
-	    hdrbuf[10] == 0x11 && hdrbuf[11] == 0x3c &&
-	    hdrbuf[14] == 0x31 && hdrbuf[7] == 0x26) {
+	if (longp[0] == 0x3c00f32c &&
+	    shortp[3] == 0x3c10 && shortp[5] == 0x2610 &&
+	    shortp[7] == 0x3c1b && shortp[9] == 0x277b &&
+	    shortp[11] == 0x3c10 && shortp[13] == 0x2610 &&
+	    shortp[15] == 0x3c11 && shortp[17] == 0x2631) {
 		/* Little-endian cookie found */
-		start = (void *) ((shortp[0] << 16) + shortp[2]);
-		end = (void *) ((shortp[4] << 16) + shortp[6]);
-		bss = (void *) ((shortp[8] << 16) + shortp[10]);
+		start = (void *) ((shortp[2] << 16) + shortp[4]);
+		bss = (void *) ((shortp[10] << 16) + shortp[12]);
+		end = (void *) ((shortp[14] << 16) + shortp[16]);
 #else /* !__mips__ */
 	if (longp[0] == 0xf32c0037 &&
 	    hdrbuf[4] == 0x37 && (hdrbuf[5] & 0xf) == 0x4 &&
@@ -111,8 +111,8 @@ load_bin(const char *fname, int verbose)
 	    hdrbuf[20] == 0xb7 && (hdrbuf[21] & 0xf) == 0x4 &&
 	    hdrbuf[24] == 0x93 && hdrbuf[25] == 0x84) {
 		start = (void *) ((longp[1] & 0xfffff000) + (longp[2] >> 20));
-		bss = (void *) ((longp[3] & 0xfffff000) + (longp[4] >> 20));
-		end = (void *) ((longp[5] & 0xfffff000) + (longp[6] >> 20));
+		bss = (void *) ((longp[5] & 0xfffff000) + (longp[6] >> 20));
+		end = (void *) ((longp[7] & 0xfffff000) + (longp[8] >> 20));
 #endif
 	} else {
 		printf("invalid file type, missing header cookie\n");
