@@ -38,6 +38,7 @@
 	.type _start,@function
 
 _start:
+	.option norelax
 	/* Magic block required by the bootloader, otherwise harmless */
 	lui	zero, 0xf32c0	/* f32c cookie */
 	lui	s0, %hi(_start)	/* Executable code base address, absolute */
@@ -55,6 +56,7 @@ _start:
 
 	/* Set global pointer */
 	la	gp, __global_pointer$
+	.option relax
 
 	/* Save argc, argv, envp, ra */
 	move	s4, a0
