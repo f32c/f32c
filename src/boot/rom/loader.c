@@ -224,8 +224,6 @@ is_f32c_exec(uint8_t *buf)
 	int16_t *shortp = (void *) buf;
 #endif
 
-pchar('\n');
-phex32((uint32_t) buf);
 #ifdef __mips__
 	if (longp[0] == 0x3c00f32c &&
 	    shortp[3] == 0x3c10 && shortp[5] == 0x2610 &&
@@ -236,10 +234,12 @@ phex32((uint32_t) buf);
 	if (longp[0] == 0xf32c0037 &&
 	    buf[4] == 0x37 && (buf[5] & 0xf) == 0x4 &&
 	    buf[8] == 0x13 && buf[9] == 0x04 &&
-	    buf[12] == 0x37 && (buf[13] & 0xf) == 0x4 &&
-	    buf[16] == 0x13 && buf[17] == 0x04 &&
-	    buf[20] == 0xb7 && (buf[21] & 0xf) == 0x4 &&
-	    buf[24] == 0x93 && buf[25] == 0x84)
+	    buf[12] == 0x37 && (buf[13] & 0xf) == 0x2 &&
+	    buf[16] == 0x13 && buf[17] == 0x02 &&
+	    buf[20] == 0x37 && (buf[21] & 0xf) == 0x4 &&
+	    buf[24] == 0x13 && buf[25] == 0x04 &&
+	    buf[28] == 0xb7 && (buf[29] & 0xf) == 0x4 &&
+	    buf[32] == 0x93 && buf[33] == 0x84)
 #endif
 		return (1);
 	return (0);

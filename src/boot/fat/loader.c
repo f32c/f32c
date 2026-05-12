@@ -106,10 +106,12 @@ load_bin(const char *fname, int verbose)
 	if (longp[0] == 0xf32c0037 &&
 	    hdrbuf[4] == 0x37 && (hdrbuf[5] & 0xf) == 0x4 &&
 	    hdrbuf[8] == 0x13 && hdrbuf[9] == 0x04 &&
-	    hdrbuf[12] == 0x37 && (hdrbuf[13] & 0xf) == 0x4 &&
-	    hdrbuf[16] == 0x13 && hdrbuf[17] == 0x04 &&
-	    hdrbuf[20] == 0xb7 && (hdrbuf[21] & 0xf) == 0x4 &&
-	    hdrbuf[24] == 0x93 && hdrbuf[25] == 0x84) {
+	    hdrbuf[12] == 0x37 && (hdrbuf[13] & 0xf) == 0x2 &&
+	    hdrbuf[16] == 0x13 && hdrbuf[17] == 0x02 &&
+	    hdrbuf[20] == 0x37 && (hdrbuf[21] & 0xf) == 0x4 &&
+	    hdrbuf[24] == 0x13 && hdrbuf[25] == 0x04 &&
+	    hdrbuf[28] == 0xb7 && (hdrbuf[29] & 0xf) == 0x4 &&
+	    hdrbuf[32] == 0x93 && hdrbuf[33] == 0x84) {
 		start = (void *) ((longp[1] & 0xfffff000) + (longp[2] >> 20));
 		bss = (void *) ((longp[5] & 0xfffff000) + (longp[6] >> 20));
 		end = (void *) ((longp[7] & 0xfffff000) + (longp[8] >> 20));
