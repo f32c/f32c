@@ -184,8 +184,8 @@ main(void)
 	char *cp;
 	int argc = 0;
 	int i, c;
-	size_t len;
 	struct timespec tv0, tv1;
+	char buf[128];
 
 	/* If f32c trampoline requested, load the binary, set the env, boot */
 	if (f32c_eip->cookie == F32C_EXECINFO_COOKIE && f32c_eip->tries == 1
@@ -269,10 +269,8 @@ main(void)
 
 	while (loadaddr == NULL) {
 		printf("File to boot: ");
-		/* XXX todo: stty echo */
-		i = getline(&cp, &len, stdin);
-		cp[i] = 0;
-		loadaddr = load_bin(cp, 1);
+		cp = gets_s(buf, sizeof(buf));
+		loadaddr = load_bin(buf, 1);
 	}
 
 	if (loadaddr == NULL) {
