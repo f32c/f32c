@@ -26,8 +26,7 @@
 #ifndef _STRINGS_H_
 #define	_STRINGS_H_
 
-void	bcopy(const void *, void *, size_t);
-
+#define	bcopy(src, dst, len) memcpy(dst, src, len);
 #define bzero(b, len) memset(b, 0, len)
 
 int	strcasecmp(const char *, const char *) __pure;
