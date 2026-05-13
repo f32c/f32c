@@ -26,8 +26,12 @@
 #ifndef _STRINGS_H_
 #define	_STRINGS_H_
 
-int	 strcasecmp(const char *, const char *) __pure;
-int	 strncasecmp(const char *, const char *, size_t) __pure;
+void	bcopy(const void *, void *, size_t);
+
+#define bzero(b, len) memset(b, 0, len)
+
+int	strcasecmp(const char *, const char *) __pure;
+int	strncasecmp(const char *, const char *, size_t) __pure;
 
 static __inline __pure2 int
 ffs(int mask)

@@ -62,15 +62,6 @@ int strcmp(const char * __restrict, const char * __restrict);
 #define	strcpy(dst, src) __builtin_strcpy((dst), (src))
 
 
-static inline void
-bzero(void *dst, size_t len)
-{
-	char *cp = (char *) dst;
-
-	while (len--)
-		*cp++ = 0;
-}
-
 static inline void *
 _memcpy(void *dst, const void *src, int len)
 {
