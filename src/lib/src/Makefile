@@ -93,7 +93,7 @@ ifeq ($(LIB),c)
 	fs/diskio_sdcard.c
 
  CFILES += stdio/getdelim.c stdio/getline.c stdio/gets.c \
-	stdio/perror.c stdio/printf.c stdio/sprintf.c
+	stdio/perror.c stdio/printf.c stdio/sprintf.c stdio/sscanf.c
 
  CFILES += stdlib/abs.c stdlib/atoi.c stdlib/getenv.c \
 	stdlib/labs.c stdlib/malloc.c \

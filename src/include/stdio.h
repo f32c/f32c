@@ -48,10 +48,11 @@ int	printf(const char * __restrict, ...) \
 	    __attribute__((format (printf, 1, 2)));
 int	fprintf(FILE *, const char * __restrict, ...) \
 	    __attribute__((format (printf, 2, 3)));
-int	sprintf(char * __restrict, const char * __restrict, ...) \
-	    __attribute__((format (printf, 2, 3)));
 int	snprintf(char * __restrict, size_t, const char * __restrict, ...) \
 	    __attribute__((format (printf, 3, 4)));
+int	sprintf(char * __restrict, const char * __restrict, ...) \
+	    __attribute__((format (printf, 2, 3)));
+int	sscanf(const char * __restrict, const char * __restrict, ...);
 int	vprintf(const char * __restrict, __va_list);
 int	vsprintf(char * __restrict, const char * __restrict, __va_list);
 
