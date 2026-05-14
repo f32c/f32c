@@ -268,6 +268,7 @@ main(void)
 	if (f32c_eip->cookie == F32C_EXECINFO_COOKIE && f32c_eip->tries++ == 0)
 		verbose_boot = 0;
 
+	/* Search for a FAT partition signature */
 	for (addr = 0; addr < FLASH_ADDR_LIM; addr += FLASH_ADDR_INC) {
 		if (verbose_boot)
 			pchar('.');
@@ -277,19 +278,22 @@ main(void)
 		puts("\nFAT partition found at 0x");
 		phex32(addr);
 
-		/* Check for boot code in front of the FAT partition */
-		flash_read_block(buf, addr - FLASH_ADDR_INC, 40);
-		if (addr > 0 && is_f32c_exec(buf)) {
+		/* Search for boot code in front of the FAT partition */
+		do {
+			if (verbose_boot)
+				pchar('*');
 			addr -= FLASH_ADDR_INC;
-			break;
-		}
+			flash_read_block(buf, addr, 40);
+		} while (addr >= 0 && !is_f32c_exec(buf));
+		break;
 	}
+
 	if (verbose_boot) {
 		pchar('\r');
 		pchar('\n');
 	}
 
-	if (addr == FLASH_ADDR_LIM) {
+	if (addr < 0 || addr == FLASH_ADDR_LIM) {
 		puts("Boot sector not found.\n");
 		cp = sio_boot();
 		if (cp == NULL)
