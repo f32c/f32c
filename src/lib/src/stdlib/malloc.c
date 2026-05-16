@@ -29,7 +29,12 @@
 #include <strings.h>
 
 
+/* End of data / BSS section, word aligned */
 extern void __section("data") *_end;
+
+/* End of available memory, if set by the loader */
+uint32_t __memtop;
+uint32_t __ramdisksiz;
 
 static uint32_t *heap;
 
@@ -63,8 +68,16 @@ malloc_init()
 	uint32_t off, ram_top;
 	volatile uint32_t *probe;
 
+	heap = (void *) &_end;
+
+	/* Use __memtop (if provided by loader) for determining heap size */
+	if (__memtop != 0 && __memtop > (uint32_t) heap) {
+		ram_top = __memtop;
+		goto got_ram_top;
+	}
+
 	/* Attempt to guess the amount of available RAM, max 256 MB */
-	probe = heap = (void *) &_end;
+	probe = heap;
 	off = 1024;
 	for (i = -1; i < 2 && off < (1 << 28) / sizeof(*heap); i++) {
 		val = probe[off];
@@ -83,9 +96,10 @@ malloc_init()
 	i = ~((1 << 31) | off * sizeof(probe));
 	ram_top = (uint32_t) &heap[off] - (((uint32_t) heap) & i);
 
+got_ram_top:
 	/* Reserve stack space depending on memory mapping */
 	if ((int) ram_top < 0)
-		ram_top -= 0x2000; /* 0x80000000 (XRAM), 8 K */
+		ram_top -= 0x4000; /* 0x80000000 (XRAM), 16 K */
 	else
 		ram_top -= 0x1000; /* 0x00000000 (BRAM), 4 K */
 
@@ -95,7 +109,6 @@ malloc_init()
 		probe[0] = SET_FREE(i);
 	} else
 		i = 0;
-
 	heap[i] = 0;
 }
 
