@@ -40,7 +40,7 @@
  * Ignores `locale' stuff.  Assumes that the upper and lower case
  * alphabets and digits are each contiguous.
  */
-static __attribute__((optimize("-Os"))) long
+static long
 _strtolx(const char *nptr, char **endptr, int base, int sig)
 {
 	const char *s = nptr;
@@ -127,14 +127,14 @@ _strtolx(const char *nptr, char **endptr, int base, int sig)
 	return (acc);
 }
 
-__attribute__((optimize("-Os"))) long
+long
 strtoul(const char *nptr, char **endptr, int base)
 {
 
 	return _strtolx(nptr, endptr, base, 0);
 }
 
-__attribute__((optimize("-Os"))) long
+long
 strtol(const char *nptr, char **endptr, int base)
 {
 
