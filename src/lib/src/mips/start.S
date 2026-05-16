@@ -23,11 +23,7 @@
  * SUCH DAMAGE.
  */
 
-#include <mips/asm.h>
 #include <mips/regdef.h>
-#include <mips/cpuregs.h>
-#include <dev/io.h>
-
 
 /*
  * Set small data index register, set curthread, clear BSS, and jump
@@ -75,6 +71,19 @@ bss_bzero_enter:
 	/* Set environ from a2 (envp) */
 	la	s0, environ
 	sw	a2, (s0)
+
+	/* Set __memtop, __ramdisksiz if provided by the loader */
+	la	s0, _start
+	lw	t0, (s0)
+	li	t1, 0xf32cf00d
+	bne	t0, t1, skip_memtop
+	lw	t0, 4(s0)
+	la	s1, __memtop
+	sw	t0, (s1)
+	lw	t1, 8(s0)
+	la	s1, __ramdisksiz
+	sw	t1, (s1)
+skip_memtop:
 
 	/* Call initializers / constructors */
 	la	s0, __init_array_start
