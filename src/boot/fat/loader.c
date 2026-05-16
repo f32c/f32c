@@ -37,6 +37,8 @@
 #include <sys/exec.h>
 
 extern char **environ;
+extern uint32_t __memtop;
+extern uint32_t __ramdisksiz;
 
 static const char *bootfiles[] = {
 	"/boot.bin",
@@ -173,6 +175,23 @@ loadenv(const char *path)
 }
 
 
+static uint32_t
+strtomemsiz(const char *cp)
+{
+	uint32_t val = strtoul(cp, NULL, 0);
+
+	/* Search for unit specifier (K or M) */
+	if (cp[0] == '0' && (cp[1] == 'x' || cp[1] == 'X'))
+		cp += 2;
+	for (; isxdigit(*cp); cp++) {}
+	if (*cp == 'k' || *cp == 'K')
+		val <<= 10;
+	else if (*cp == 'm' || *cp == 'M')
+		val <<= 20;
+	return (val);
+}
+
+
 void
 main(void)
 {
@@ -216,9 +235,16 @@ main(void)
 	loadenv("/boot/loader.conf");
 
 	/* Adjust console baud rate */
-	cp = getenv("bauds");
-	if (cp != NULL && (i = atoi(cp)) > 0)
+	if ((cp = getenv("bauds")) != NULL && (i = strtoul(cp, NULL, 0)) > 0)
 		sio_setbaud(i);
+
+	/* Fetch __ramdisksiz */
+	if ((cp = getenv("ramdisksiz")) != NULL)
+		__ramdisksiz = strtomemsiz(cp);
+
+	/* Fetch __memtop */
+	if ((cp = getenv("ramsiz")) != NULL && (i = strtomemsiz(cp)) > 0)
+		__memtop = 0x80000000 + i - __ramdisksiz;
 
 	/* Print out identification message */
 	printf("f32c "
@@ -270,18 +296,27 @@ main(void)
 	while (loadaddr == NULL) {
 		printf("File to boot: ");
 		cp = gets_s(buf, sizeof(buf));
+		if (cp == NULL) {
+			/* XXX FIXME: unreachable due to ISIG SIGINT */
+			f32c_eip->cookie = F32C_EXECINFO_NOBOOT;
+			return;
+		}
 		loadaddr = load_bin(buf, 1);
-	}
-
-	if (loadaddr == NULL) {
-		/* XXX currently unreachable, revisit & fix */
-		f32c_eip->cookie = F32C_EXECINFO_NOBOOT;
-		printf("No bootable file(s) found, exiting\n");
-		return;
 	}
 
 	/* XXX todo: alloca()te and populate argv and envp */
 
+	/* If __memtop is set, propagate it to the executable */
+	if (__memtop != 0) {
+		uint32_t *loadinfo = loadaddr;
+
+		loadinfo[0] = 0xf32cf00d;
+		loadinfo[1] = __memtop;
+		loadinfo[2] = __ramdisksiz;
+		loadaddr = (void *) &loadinfo[3];
+		if ((uint32_t) loadaddr < __memtop)
+			sp = (void*) __memtop;
+	}
 boot:
 	/* Invalidate I-cache */
 #ifdef __mips__
@@ -306,6 +341,7 @@ boot:
 
 	__asm __volatile__(
 #ifdef __mips__
+		".set noat;"
 		"move $1, %4;"	/* at */
 		"move $4, %0;"	/* a0 */
 		"move $5, %1;"	/* a1 */
@@ -313,6 +349,7 @@ boot:
 		"move $29, %3;"	/* sp */
 		"move $31, $0;" /* ra */
 		"jr $1;"
+		".set at;"
 #else /* riscv */
 		"move t0, %4;"
 		"move a0, %0;"
