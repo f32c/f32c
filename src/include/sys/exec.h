@@ -10,8 +10,8 @@ struct f32c_execinfo {
 	int	cookie;		/* F32C_EXECINFO_COOKIE */
 	int	tries;		/* starts from 0, bumped by ROM bootloader */
 	int	csum;		/* encompasses size, argc and all strings */
-	int	memtop;		/* top of available memory, including stack */
-	int	ramdisksiz;	/* RAM disk size, starts at memtop */
+	void	*memtop;	/* top of available memory, including stack */
+	void	*ramdisk;	/* RAM disk base addr, >= memtop */
 	int	size;		/* argv, envp, and all strings, word aligned */
 	int	argc;
 	char	**argv;

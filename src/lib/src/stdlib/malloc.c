@@ -34,7 +34,6 @@ extern void __section("data") *_end;
 
 /* End of available memory, if set by the loader */
 uint32_t __memtop;
-uint32_t __ramdisksiz;
 
 static uint32_t *heap;
 

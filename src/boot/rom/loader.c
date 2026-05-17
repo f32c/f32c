@@ -206,10 +206,10 @@ is_fat_volume(uint8_t *buf)
 	int i;
 
 	if (buf[0] != 0xeb || buf[2] != 0x90 ||
-	    buf[0xb] != 0 || buf[0xc] != 0x10 ||
+	    buf[0xb] != 0 || (buf[0xc] != 0x10 && buf[0xc] != 0x02) ||
 	    buf[0x1fe] != 0x55 || buf[0x1ff] != 0xaa)
 		return (0);
-	for (i = 0x92; i < 0x1fe; i++)
+	for (i = 0x40; i < 0x1fe; i++)
 		if (buf[i] != 0)
 			return (0);
 	return (1);

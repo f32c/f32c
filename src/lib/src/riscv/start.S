@@ -76,7 +76,7 @@ bss_bzero_enter:
 	la	s0, environ
 	sw	a2, (s0)
 
-	/* Set __memtop, __ramdisksiz if provided by the loader */
+	/* Set __memtop, __ramdisk if provided by the loader */
 	la	s0, _start
 	lw	t0, (s0)
 	li	t1, 0xf32cf00d
@@ -85,7 +85,7 @@ bss_bzero_enter:
 	la	s1, __memtop
 	sw	t0, (s1)
 	lw	t1, 8(s0)
-	la	s1, __ramdisksz
+	la	s1, __ramdisk
 	sw	t1, (s1)
 skip_memtop:
 

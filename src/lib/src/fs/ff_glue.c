@@ -43,6 +43,8 @@
 #include <dev/io.h>
 
 
+void *__ramdisk;
+
 static FATFS *ff_mounts[FF_VOLUMES];
 static int ff_mounted;
 
@@ -134,10 +136,10 @@ check_automount(void)
 			    1, /* SPI slave unit */
 			    0, /* offset from media start, bytes*/
 			    512 * 1024 /* block size, bytes*/);
-		else
-			diskio_attach_ram(&disk_i[i],
-			    malloc(i * 1024 * 1024), /* base addr*/
-			    i * 1024 * 1024 /* size, bytes */);
+		else if (__ramdisk != NULL) {
+			diskio_attach_ram(&disk_i[i], (void *) __ramdisk,
+			    1024 * 1024 /* size, bytes, XXX fixme!!! */);
+		}
 		f_mount(ff_mounts[i], disk_i[i].d_mnton, 0);
 	}
 	ff_mounted = 1;

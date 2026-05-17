@@ -31,8 +31,8 @@
 #include <sys/exec.h>
 
 
-extern uint32_t __memtop;
-extern uint32_t __ramdisksiz;
+extern void *__memtop;
+extern void *__ramdisk;
 
 
 int
@@ -91,7 +91,7 @@ execve(const char *path, char *const argv[], char *const envp[])
 	f32c_eip->cookie = F32C_EXECINFO_COOKIE;
 	f32c_eip->tries = 0;
 	f32c_eip->memtop = __memtop;
-	f32c_eip->ramdisksiz = __ramdisksiz;
+	f32c_eip->ramdisk = __ramdisk;
 	f32c_eip->size = size;
 	f32c_eip->argc = argc;
 	f32c_eip->argv = xargv;

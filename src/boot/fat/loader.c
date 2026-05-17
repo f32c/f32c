@@ -37,8 +37,8 @@
 #include <sys/exec.h>
 
 extern char **environ;
-extern uint32_t __memtop;
-extern uint32_t __ramdisksiz;
+extern void *__memtop;
+extern void *__ramdisk;
 
 static const char *bootfiles[] = {
 	"/boot.bin",
@@ -205,6 +205,7 @@ main(void)
 	int i, c;
 	struct timespec tv0, tv1;
 	char buf[128];
+	uint32_t ramsiz = 0, ramdisksiz = 0;
 
 	/* If f32c trampoline requested, load the binary, set the env, boot */
 	if (f32c_eip->cookie == F32C_EXECINFO_COOKIE && f32c_eip->tries == 1
@@ -238,13 +239,13 @@ main(void)
 	if ((cp = getenv("bauds")) != NULL && (i = strtoul(cp, NULL, 0)) > 0)
 		sio_setbaud(i);
 
-	/* Fetch __ramdisksiz */
-	if ((cp = getenv("ramdisksiz")) != NULL)
-		__ramdisksiz = strtomemsiz(cp);
+	/* Fetch ramsiz */
+	if ((cp = getenv("ramsiz")) != NULL)
+		ramsiz = strtomemsiz(cp);
 
-	/* Fetch __memtop */
-	if ((cp = getenv("ramsiz")) != NULL && (i = strtomemsiz(cp)) > 0)
-		__memtop = 0x80000000 + i - __ramdisksiz;
+	/* Fetch ramdisksiz */
+	if ((cp = getenv("ramdisksiz")) != NULL)
+		ramdisksiz = strtomemsiz(cp);
 
 	/* Print out identification message */
 	printf("f32c "
@@ -258,6 +259,12 @@ main(void)
 	    "(riscv)"
 #endif
 	    " FAT bootloader v 0.7 (" __DATE__ ")\n");
+
+	if (ramsiz != 0) {
+		__memtop = (void *) 0x80000000 + ramsiz - ramdisksiz
+		    - 128 * 1024;
+		__ramdisk = __memtop;
+	}
 
 	/* XXX choose the boot file based on environ - revisit */
 	for (i = 0; loadaddr == NULL && bootfiles[i] != NULL; i++)
@@ -311,11 +318,11 @@ main(void)
 		uint32_t *loadinfo = loadaddr;
 
 		loadinfo[0] = 0xf32cf00d;
-		loadinfo[1] = __memtop;
-		loadinfo[2] = __ramdisksiz;
+		loadinfo[1] = (uint32_t) __memtop;
+		loadinfo[2] = (uint32_t) __ramdisk;
 		loadaddr = (void *) &loadinfo[3];
-		if ((uint32_t) loadaddr < __memtop)
-			sp = (void*) __memtop;
+		if (loadaddr < __memtop)
+			sp = __memtop;
 	}
 boot:
 	/* Invalidate I-cache */
