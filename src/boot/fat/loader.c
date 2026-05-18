@@ -227,6 +227,10 @@ main(void)
 		/* Safely move argv / envp / strings to the local stack */
 		memmove(argv, f32c_eip->argv, f32c_eip->size);
 
+		/* Propagate memtop, ramdisk */
+		__memtop = f32c_eip->memtop;
+		__ramdisk = f32c_eip->ramdisk;
+
 		/* Adjust argv / envp pointer addresses */
 		for (i = 0; argv[i] != NULL; i++)
 			argv[i] += (argv - f32c_eip->argv) * sizeof(char *);
@@ -392,6 +396,7 @@ main(void)
 	while ((((int) cp) & 0x3) != 0)
 		*cp++ = 0;
 
+boot:
 	/* If __memtop is set, propagate it to the executable */
 	if (__memtop != 0) {
 		uint32_t *loadinfo = loadaddr;
@@ -403,7 +408,7 @@ main(void)
 		if (loadaddr < __memtop)
 			sp = __memtop;
 	}
-boot:
+
 	/* Invalidate I-cache */
 #ifdef __mips__
 	for (i = 0x80000000; i < 0x80010000; i += 4) {
