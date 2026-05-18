@@ -207,9 +207,9 @@ main(void)
 	char **envp = NULL;
 	char *cp;
 	int argc = 0;
-	int i, c, loader_area;
+	int i, c, loader_area, size, envc;
 	struct timespec tv0, tv1;
-	char buf[128];
+	char execpath[128];
 	uint32_t ramsiz = 0, ramdisksiz = 0;
 	uint32_t bytespersec, totsec;
 
@@ -313,9 +313,19 @@ main(void)
 	if (ramsiz != 0)
 		printf("Available RAM: %d Kbytes\n", ramsiz / 1024);
 
-	/* XXX choose the boot file based on environ - revisit */
-	for (i = 0; loadaddr == NULL && bootfiles[i] != NULL; i++)
+	/* Fetch bootfile path */
+	if ((cp = getenv("bootfile")) != NULL) {
+		loadaddr = load_bin(cp, 1);
+		if (loadaddr != NULL)
+			strcpy(execpath, cp);
+	}
+
+	/* Fallback if bootfile not set or couldn't be loaded */
+	for (i = 0; loadaddr == NULL && bootfiles[i] != NULL; i++) {
 		loadaddr = load_bin(bootfiles[i], 1);
+		if (loadaddr != NULL)
+			strcpy(execpath, bootfiles[i]);
+	}
 
 	/* Opportunity to escape to a file chooser prompt */
 	if (loadaddr != NULL && (cp = getenv("autoboot_delay")) != NULL) {
@@ -342,23 +352,45 @@ main(void)
 		printf(" \n");
 	}
 
-	/* Ditch the boot environment and load the application env */
-	cp = getenv("appenv_file");
-	if (cp != NULL)
-		loadenv(cp);
-
+	/* All load attempts so far have failed, pick the file interactively */
 	while (loadaddr == NULL) {
 		printf("File to boot: ");
-		cp = gets_s(buf, sizeof(buf));
+		cp = gets_s(execpath, sizeof(execpath));
 		if (cp == NULL) {
 			/* XXX FIXME: unreachable due to ISIG SIGINT */
 			f32c_eip->cookie = F32C_EXECINFO_NOBOOT;
 			return;
 		}
-		loadaddr = load_bin(buf, 1);
+		loadaddr = load_bin(execpath, 1);
 	}
 
-	/* XXX todo: alloca()te and populate argv and envp */
+	/* Ditch the boot environment and load the application env */
+	if ((cp = getenv("envfile")) != NULL)
+		loadenv(cp);
+
+	/* alloca()te and populate argv and envp, C/P from execve() */
+	size = strlen(execpath) + 1;
+	for (envc = 0; environ[envc] != NULL; envc++)
+		size += strlen(environ[envc]) + 1;
+	envc++;
+	size = (size + 3) & ~3;
+	size += sizeof(char *);
+	size += envc * sizeof(char *);
+	argv = alloca(size);
+	envp = &argv[1];
+	cp = (void *) &envp[envc];
+	strcpy(cp, execpath);
+	argc = 1;
+	argv[0] = cp;
+	cp += strlen(cp) + 1;
+	for (envc = 0; environ[envc] != NULL; envc++) {
+		strcpy(cp, environ[envc]);
+		envp[envc] = cp;
+		cp += strlen(cp) + 1;
+	}
+	envp[envc] = NULL;
+	while ((((int) cp) & 0x3) != 0)
+		*cp++ = 0;
 
 	/* If __memtop is set, propagate it to the executable */
 	if (__memtop != 0) {
