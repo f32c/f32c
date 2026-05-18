@@ -135,11 +135,11 @@ check_automount(void)
 			    IO_SPI_FLASH, /* SPI port */
 			    1, /* SPI slave unit */
 			    0, /* offset from media start, bytes*/
-			    512 * 1024 /* block size, bytes*/);
-		else if (__ramdisk != NULL) {
-			diskio_attach_ram(&disk_i[i], (void *) __ramdisk,
-			    1024 * 1024 /* size, bytes, XXX fixme!!! */);
-		}
+			    0 /* Size not known hence zero */);
+		else if (__ramdisk != NULL)
+			diskio_attach_ram(&disk_i[i],
+			    __ramdisk, /* base address */
+			    0 /* Size not known hence zero */);
 		f_mount(ff_mounts[i], disk_i[i].d_mnton, 0);
 	}
 	ff_mounted = 1;
@@ -489,8 +489,6 @@ getfsstat(struct statfs *buf, long bufsize, int mode)
 }
 
 
-#include <stdio.h>
-
 int
 mkfs(const char *path, int offset, int size)
 {
@@ -510,7 +508,9 @@ mkfs(const char *path, int offset, int size)
 	if (i == 0)
 		diskio_attach_flash(&disk_i[i], IO_SPI_FLASH, 0, offset, size);
 	else if (i == 2)
-		diskio_attach_fram(&disk_i[i], IO_SPI_FLASH, 1, 0, 512 * 1024);
+		diskio_attach_fram(&disk_i[i], IO_SPI_FLASH, 1, offset, size);
+	else if (i == 3)
+		diskio_attach_ram(&disk_i[i], __ramdisk, size);
 
 	res = f_mkfs(path, &options, buf, FF_MAX_SS);
 	return (res);

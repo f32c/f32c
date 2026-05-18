@@ -134,6 +134,7 @@ diskio_attach_ram(diskio_t di, void *base, uint32_t size)
 	di->d_sw = &ramdisk_sw;
 	di->d_mntfrom = "RAM";
 	priv->base = base;
-	priv->size = size;
+	if (size != 0)
+		priv->size = size;
 	diskio_attach_generic(di);
 }
