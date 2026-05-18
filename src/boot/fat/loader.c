@@ -24,6 +24,7 @@
  */
 
 #include <ctype.h>
+#include <dirent.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -31,14 +32,18 @@
 #include <time.h>
 #include <unistd.h>
 
-#include <dev/io.h>
-
 #include <sys/elf.h>
 #include <sys/exec.h>
+#include <sys/mount.h>
+
+#include <fatfs/diskio.h>
+
+#include <dev/io.h>
 
 extern char **environ;
 extern void *__memtop;
 extern void *__ramdisk;
+extern void *_start;
 
 static const char *bootfiles[] = {
 	"/boot.bin",
@@ -202,10 +207,11 @@ main(void)
 	char **envp = NULL;
 	char *cp;
 	int argc = 0;
-	int i, c;
+	int i, c, loader_area;
 	struct timespec tv0, tv1;
 	char buf[128];
 	uint32_t ramsiz = 0, ramdisksiz = 0;
+	uint32_t bytespersec, totsec;
 
 	/* If f32c trampoline requested, load the binary, set the env, boot */
 	if (f32c_eip->cookie == F32C_EXECINFO_COOKIE && f32c_eip->tries == 1
@@ -240,11 +246,11 @@ main(void)
 		sio_setbaud(i);
 
 	/* Fetch ramsiz */
-	if ((cp = getenv("ramsiz")) != NULL)
+	if ((cp = getenv("ramsize")) != NULL)
 		ramsiz = strtomemsiz(cp);
 
 	/* Fetch ramdisksiz */
-	if ((cp = getenv("ramdisksiz")) != NULL)
+	if ((cp = getenv("ramdisksize")) != NULL)
 		ramdisksiz = strtomemsiz(cp);
 
 	/* Print out identification message */
@@ -260,11 +266,52 @@ main(void)
 #endif
 	    " FAT bootloader v 0.7 (" __DATE__ ")\n");
 
-	if (ramsiz != 0) {
-		__memtop = (void *) 0x80000000 + ramsiz - ramdisksiz
-		    - 128 * 1024;
+	do {
+		if (ramsiz == 0)
+			break;
+		if ((ramsiz & 0x3ff) != 0) {
+			printf("RAM size of 0x%x not aligned to 1024 B, "
+			    "ignoring\n", ramsiz);
+			break;
+		}
+		loader_area = (uint32_t) sp - (uint32_t) &_start;
+		ramsiz -= loader_area;
+		__memtop = (void *) 0x80000000 + ramsiz;
+
+		if (ramdisksiz == 0)
+			break;
+		if ((ramdisksiz & 0x3ff) != 0) {
+			printf("RAM disk size of 0x%x not aligned to 1024 B, "
+			    "ignoring\n", ramdisksiz);
+			break;
+		}
+		if (ramdisksiz >= ramsiz) {
+			printf("RAM disk size of 0x%x exceeds available"
+			    "memory size of 0x%08x, ignoring\n",
+			    ramdisksiz, ramsiz);
+			break;
+		}
+
+		__memtop -= ramdisksiz;
+		ramsiz -= ramdisksiz;
 		__ramdisk = __memtop;
-	}
+		printf("RAM disk: %d Kbytes at %p", ramdisksiz / 1024,
+		    __ramdisk);
+
+		cp = __ramdisk;
+		bytespersec = cp[11] + cp[12] * 256;
+		totsec = cp[19] + cp[20] * 256;
+
+		if (!is_fat_volume(__ramdisk) ||
+		    bytespersec * totsec != ramdisksiz) {
+			printf(", uninitialized, formatting...\n");
+			mkfs("R:", 0, ramdisksiz);
+		} else
+			printf("\n");
+	} while (0);
+
+	if (ramsiz != 0)
+		printf("Available RAM: %d Kbytes\n", ramsiz / 1024);
 
 	/* XXX choose the boot file based on environ - revisit */
 	for (i = 0; loadaddr == NULL && bootfiles[i] != NULL; i++)
