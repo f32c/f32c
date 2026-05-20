@@ -11,6 +11,7 @@
 #include <fcntl.h>
 #include <limits.h>
 #include <signal.h>
+#include <spawn.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -20,6 +21,7 @@
 
 #include <sys/stat.h>
 #include <sys/mount.h>
+#include <sys/wait.h>
 
 #ifndef F32C
 #include <sys/wait.h>
@@ -1317,6 +1319,27 @@ srec_h(int argc, char **argv)
 
 
 static void
+system_h(int argc, char **argv)
+{
+	pid_t childpid;
+	int status;
+
+	if (argc < 2) {
+		printf("Invalid arguments\n");
+		return;
+	}
+
+	/* XXX check for argc bounds? */
+	argv[argc] = NULL;
+	if (posix_spawn(&childpid, argv[1], NULL, NULL, &argv[1], environ)) {
+		perror("posix_spawn() failed");
+		return;
+	}
+	waitpid(childpid, &status, 0);
+}
+
+
+static void
 df_h(int argc __unused, char **argv __unused)
 {
 	int i, mounts;
@@ -1573,6 +1596,7 @@ const struct cmdswitch {
 	CMDSW_ENTRY("rmdir",	rmdir_h),
 	CMDSW_ENTRY("setenv",	setenv_h),
 	CMDSW_ENTRY("srec",	srec_h),
+	CMDSW_ENTRY("system",	system_h),
 	CMDSW_ENTRY("?",	help_h),
 	{ 0, 0 }
 };
@@ -1698,4 +1722,6 @@ retok:
 		}
 	} while (!do_exit);
 	do_exit = 0;
+
+	exit(0);
 }
