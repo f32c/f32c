@@ -89,7 +89,7 @@ skip_memtop:
 	la	s0, __init_array_start
 	la	s1, _fdata
 	b	ctor_loop_enter
-	move	s7, ra
+	sw	ra, 0(k1)	/* k1 == tp */
 ctor_loop:
 	jalr	a0
 	addiu	s0, s0, 4
@@ -97,13 +97,16 @@ ctor_loop_enter:
 	bne	s0, s1,	ctor_loop
 	lw	a0, (s0)
 
-	/* Restore argc, argv, envp, ra */
+	/* Restore argc, argv, envp */
 	move	a0, s4
 	move	a1, s5
 	move	a2, s6
-	move	ra, s7
 
-	/* Done, jump into main */
-	j	main
+	/* Done, jump into main() */
+	jal	main
 	addiu	sp, sp, -16 /* Guard space where main() may store a0, a1, a2 */
+
+	/* main() returned, time to exit() */
+	j	exit
+	move	a0, v0
 	.set reorder

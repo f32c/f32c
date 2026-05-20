@@ -62,7 +62,7 @@ _start:
 	move	s4, a0
 	move	s5, a1
 	move	s6, a2
-	move	s7, ra
+	sw	ra, 0(tp)
 
 	/* The loader doesn't bzero the BSS, so we must do it here. */
 	j	bss_bzero_enter
@@ -104,7 +104,9 @@ ctor_loop_enter:
 	move	a0, s4
 	move	a1, s5
 	move	a2, s6
-	move	ra, s7
 
 	/* Done, jump into main */
-	j	main
+	jal	main
+
+	/* main() returned, time to exit() */
+	j	exit

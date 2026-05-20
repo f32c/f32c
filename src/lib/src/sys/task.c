@@ -144,11 +144,13 @@ exit(int x __unused)
 		__asm __volatile (
 #ifdef __mips__
 			".set noreorder\n"
-			"jr $0\n"
+			"lw $31, 0($27)\n" /* Restore return address */
+			"jr $31\n"	/* ra */
 			"mtc0 $0, $12\n" /* Mask and disable all interrupts */
 			".set reorder"
 #else /* riscv */
-			"jr zero\n"
+			"lw ra, 0(tp)\n" /* Restore return address */
+			"jr ra\n"
 #endif
 		);
 	}

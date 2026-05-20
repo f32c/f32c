@@ -44,6 +44,7 @@ struct task {
 };
 
 struct thread {
+	void		*td_retaddr;	/* Jump there on exit */
 	TAILQ_ENTRY(thread) td_list;	/* Owner task's threads linked list */
 	struct task	*td_task;	/* Owner task */
 	int		td_errno;	/* Last error */
