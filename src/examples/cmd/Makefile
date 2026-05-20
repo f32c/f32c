@@ -1,3 +1,4 @@
+LOADADDR = 0x81800000
 
 PROG = cmd
 
