@@ -8,11 +8,6 @@ WITHOUT_LIBS = true
 # No optional instructions in the loader
 MIN = true
 
-# Allow fence.i instruction for RISCV
-ifeq ($(ARCH),riscv)
-	CFLAGS += -march=rv32imzifencei
-endif
-
 # Appropriately configure ../sio/loader.c build
 CFLAGS += -DROM_LOADER -DONLY_I_ROM
 
