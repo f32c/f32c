@@ -75,7 +75,7 @@ static DSTATUS
 ramdisk_init_status(diskio_t di)
 {
 
-	if (RAM_BASE(di) == NULL || RAM_SIZE(di) == 0)
+	if (RAM_BASE(di) == NULL)
 		return STA_NOINIT;
 	return 0;
 }
