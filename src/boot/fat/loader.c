@@ -43,7 +43,7 @@
 extern char **environ;
 extern void *__memtop;
 extern void *__ramdisk;
-extern void *_start;
+extern void _start(void);
 
 static const char *bootfiles[] = {
 	"/boot.bin",
