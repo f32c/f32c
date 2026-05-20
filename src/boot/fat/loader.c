@@ -56,11 +56,9 @@ static char *
 load_bin(const char *fname, int verbose)
 {
 	uint8_t hdrbuf[40];
-	int fd;
-	int i;
-	char *cp;
+	int fd, i;
 	uint32_t entry, tsiz, dsiz;
-	char *start, *bss, *end;
+	char *cp, *start, *bss, *end;
 	int32_t *longp = (void *) hdrbuf;
 #ifdef __mips__
 	int16_t *shortp = (void *) hdrbuf;
@@ -398,7 +396,7 @@ main(void)
 
 boot:
 	/* If __memtop is set, propagate it to the executable */
-	if (__memtop != 0) {
+	if (__memtop != NULL) {
 		uint32_t *loadinfo = loadaddr;
 
 		loadinfo[0] = 0xf32cf00d;
