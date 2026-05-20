@@ -550,16 +550,16 @@ cd_h(int argc, char **argv)
 	}
 	getcwd(path, 128);
 	setenv("PWD", path, 1);
-	printf("%s\n", path);
 }
 
 
 static void
 pwd_h(int argc __unused, char **argv)
 {
+	char path[128];
 
-	getcwd(argv[0], 128);
-	printf("%s\n", argv[0]);
+	getcwd(path, 128);
+	printf("%s\n", path);
 }
 
 
@@ -1633,6 +1633,7 @@ void
 cli(void)
 {
 	char line[128];
+	char prompt[64];
 	int i, ll, argc = 0;
 	char *argv[MAXARGS];
 	char *lcp;
@@ -1643,9 +1644,21 @@ cli(void)
 	signal(SIGINT, sig_h);
 	siginterrupt(SIGINT, 1);
 
+	getcwd(line, 128);
+	setenv("PWD", line, 1);
+
 	do {
 		interrupt = 0;
-		if (rl("cmd>", line, sizeof(line))) {
+
+		/* Set prompt */
+		lcp = getenv("PROMPT");
+		if (lcp != NULL && lcp[0] == '$')
+			lcp = getenv(&lcp[1]);
+		if (lcp != NULL)
+			snprintf(prompt, sizeof(prompt), "%s>", lcp);
+		else
+			snprintf(prompt, sizeof(prompt), ">");
+		if (rl(prompt, line, sizeof(line))) {
 			if (errno == EINTR) {
 				printf("^C\n");
 				continue;
