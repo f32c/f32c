@@ -53,7 +53,7 @@ static const char *bootfiles[] = {
 
 
 static char *
-load_bin(const char *fname, int verbose)
+load_bin(const char *fname, int verbose, void **endp)
 {
 	uint8_t hdrbuf[40];
 	int fd, i;
@@ -82,6 +82,8 @@ load_bin(const char *fname, int verbose)
 			if (verbose)
 				printf(" OK\n");
 			close(fd);
+			if (endp != NULL)
+				*endp = &start[tsiz + dsiz];
 			return (start);
 		}
 		close(fd);
@@ -143,6 +145,8 @@ load_bin(const char *fname, int verbose)
 		printf("OK\nLoaded text & data at %p; bss at %p len %p\n",
 		    start, bss, (void *) (end - bss));
 
+	if (endp != NULL)
+		*endp = end;
 	return (start);
 }
 
@@ -199,7 +203,7 @@ void
 main(void)
 {
 	struct f32c_execinfo *f32c_eip = (void *) F32C_EXECINFO_ADDR;
-	void *loadaddr = NULL;
+	void *loadaddr = NULL, *endaddr;
 	void *sp = (void *) 0x84000000;
 	char **argv = NULL;
 	char **envp = NULL;
@@ -233,7 +237,7 @@ main(void)
 		for (i = 0; argv[i] != NULL; i++)
 			argv[i] += (argv - f32c_eip->argv) * sizeof(char *);
 
-		loadaddr = load_bin(argv[0], 0);
+		loadaddr = load_bin(argv[0], 0, &endaddr);
 		if (loadaddr != NULL)
 			goto boot;
 		printf("%s: load failed\n", argv[0]);
@@ -317,14 +321,14 @@ main(void)
 
 	/* Fetch bootfile path */
 	if ((cp = getenv("bootfile")) != NULL) {
-		loadaddr = load_bin(cp, 1);
+		loadaddr = load_bin(cp, 1, &endaddr);
 		if (loadaddr != NULL)
 			strcpy(execpath, cp);
 	}
 
 	/* Fallback if bootfile not set or couldn't be loaded */
 	for (i = 0; loadaddr == NULL && bootfiles[i] != NULL; i++) {
-		loadaddr = load_bin(bootfiles[i], 1);
+		loadaddr = load_bin(bootfiles[i], 1, &endaddr);
 		if (loadaddr != NULL)
 			strcpy(execpath, bootfiles[i]);
 	}
@@ -363,7 +367,7 @@ main(void)
 			f32c_eip->cookie = F32C_EXECINFO_NOBOOT;
 			return;
 		}
-		loadaddr = load_bin(execpath, 1);
+		loadaddr = load_bin(execpath, 1, &endaddr);
 	}
 
 	/* Ditch the boot environment and load the application env */
@@ -395,6 +399,14 @@ main(void)
 		*cp++ = 0;
 
 boot:
+	/* Check if the executable overlaps with reserved memory */
+	if (__memtop != NULL && endaddr >= __memtop) {
+		printf("Executable (%p..%p) and reserved memory (%p..) "
+		    "overlap!\n", loadaddr, endaddr, __memtop);
+		printf("Ignoring memory reservation.\n");
+		__memtop = NULL;
+	}
+
 	/* If __memtop is set, propagate it to the executable */
 	if (__memtop != NULL) {
 		uint32_t *loadinfo = loadaddr;
