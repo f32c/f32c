@@ -39,10 +39,10 @@ ifeq (${ARCH},riscv)
 	TOOLPREFIX = ${ARCH}32-elf
 
 	ifdef MIN
-		MK_CFLAGS += -march=rv32i
+		MK_CFLAGS += -march=rv32izifencei
 		ARCH_DIR = ${ARCH}_min
 	else
-		MK_CFLAGS += -march=rv32im
+		MK_CFLAGS += -march=rv32imzifencei
 		ARCH_DIR = ${ARCH}
 	endif
 else ifeq (${ARCH},mips)
