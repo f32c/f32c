@@ -135,6 +135,16 @@ task_alloc(void)
 	return(ts);
 }
 
+
+int
+atexit(void (*function)(void))
+{
+
+	/* XXX fixme */
+	return (0);
+}
+
+
 /* XXX exit() works only on CPU #0 - fixme! */
 _Noreturn void
 exit(int x __unused)
