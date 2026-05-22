@@ -23,12 +23,23 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-# $Id$
-#
 
 
-if {$argc != 2} {
-    puts "Usage: isa_check.tcl arch ifile"
+set print_instruction_count 0
+
+if {[string index [lindex $argv 0] 0] == "-"} {
+    set options [string range [lindex $argv 0] 1 end]
+    set argv [lrange $argv 1 end]
+    incr argc -1
+    foreach opt $options {
+	if {$opt == "i"} {
+	    set print_instruction_count 1
+	}
+    }
+}
+
+if {$argc < 2} {
+    puts "Usage: isa_check.tcl [options] arch ifile"
     exit 1
 }
 
@@ -110,29 +121,31 @@ foreach line [split $headers \n] {
     set line [string trim $line]
     set sname [lindex [split $line] 1]
     if {[lsearch ".init .text .rodata .data .sdata .sbss .bss" $sname] >= 0} {
-	puts -nonewline "[string range $sname 1 end] section:	"
-	puts -nonewline "start 0x[string range $line 36 43] "
+	puts -nonewline "[string range $sname 1 end]:	"
+	puts -nonewline "0x[string range $line 36 43] "
 	puts "len 0x[string range $line 16 23]"
     }
 }
 
-set tabcnt 0
-set start [lindex [lsort -integer [array names mem]] 0]
-set end [lindex [lsort -integer [array names mem]] end]
-puts "$endian endian code; instruction frequencies (total $tot):"
+if {$print_instruction_count != 0} {
+    set tabcnt 0
+    set start [lindex [lsort -integer [array names mem]] 0]
+    set end [lindex [lsort -integer [array names mem]] end]
+    puts "$endian endian code; instruction frequencies (total $tot):"
 
-foreach entry [lsort -integer -decreasing -index 1 $instr_list] {
-    puts -nonewline "[format %6s [lindex $entry 0]]:[format %5d [lindex $entry 1]]"
-    incr tabcnt
-    if {$tabcnt == 5} {
-	set tabcnt 0
-	puts ""
-    } else {
-	puts -nonewline "    "
+    foreach entry [lsort -integer -decreasing -index 1 $instr_list] {
+	puts -nonewline "[format %6s [lindex $entry 0]]:[format %5d [lindex $entry 1]]"
+	incr tabcnt
+	if {$tabcnt == 5} {
+	    set tabcnt 0
+	    puts ""
+	} else {
+	    puts -nonewline "    "
+	}
     }
-}
-if {$tabcnt != 0} {
-    puts ""
+    if {$tabcnt != 0} {
+	puts ""
+    }
 }
 
 set unsupported 0
