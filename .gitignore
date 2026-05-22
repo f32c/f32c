@@ -1,1 +1,10 @@
 *~
+rtl/altera/de0/.DS_Store
+**/.DS_Store
+
+**/db
+**/incremental_db
+**/output_files
+**/simulation
+rtl/proj/altera/de0/bram/glue.dpf
+rtl/proj/altera/de0/bram/glue_description.txt
