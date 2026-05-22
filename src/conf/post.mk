@@ -248,7 +248,9 @@ ${BIN}: ${PROG} Makefile
 
 ${PROG}: ${OBJS} Makefile
 	${LD} -o ${PROG} ${OBJS} ${MK_LIBS}
+ifdef DO_STRIP
 	${STRIP} ${STRIPFLAGS} ${PROG}
+endif
 
 ${LIB}: ${OBJS} Makefile
 	${AR} ${LIBDIR}/lib${LIB}.a ${OBJS}
