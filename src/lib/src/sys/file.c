@@ -216,7 +216,8 @@ int
 ftruncate(int fd, off_t length)
 {
 
-	return (-1);
+	/* XXX fixme! */
+	return (0);
 }
 
 
