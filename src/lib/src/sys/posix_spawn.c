@@ -163,6 +163,27 @@ posix_spawn(int *cpid, const char *path, void *fa __unused, void *at __unused,
 		"sw $28, (11 * 4)($12);"	/* gp */
 		"sw $30, (12 * 4)($12);"	/* fp */
 		"move $29, %0;"			/* Set child sp */
+		"move $2, %1;"			/* v0 = entry */
+		"move $4, %2;"			/* a0 = argc */
+		"move $5, %3;"			/* a1 = argv */
+		"move $6, %4;"			/* a2 = envp */
+		"jalr $2;"
+		/* Restore caller-preserved registers from a dedicated block */
+		"lui $12, %%hi(__spawn_regstore);" /* t0, hi */
+		"addiu $12, $12, %%lo(__spawn_regstore);" /* t0, lo */
+		"lw $16, (0 * 4)($12);"		/* s0 */
+		"lw $17, (1 * 4)($12);"		/* s1 */
+		"lw $18, (2 * 4)($12);"		/* s2 */
+		"lw $19, (3 * 4)($12);"		/* s3 */
+		"lw $20, (4 * 4)($12);"		/* s4 */
+		"lw $21, (5 * 4)($12);"		/* s5 */
+		"lw $22, (6 * 4)($12);"		/* s6 */
+		"lw $23, (7 * 4)($12);"		/* s7 */
+		"lw $30, (8 * 4)($12);"		/* s8 */
+		"lw $27, (9 * 4)($12);"		/* k1 == tp */
+		"lw $29, (10 * 4)($12);"	/* sp */
+		"lw $28, (11 * 4)($12);"	/* gp */
+		"lw $30, (12 * 4)($12);"	/* fp */
 #else /* riscv */
 		"la t0, __spawn_regstore;"
 		"sw s0, (0 * 4)(t0);"
@@ -182,31 +203,12 @@ posix_spawn(int *cpid, const char *path, void *fa __unused, void *at __unused,
 		"sw gp, (14 * 4)(t0);"
 		"sw fp, (15 * 4)(t0);"
 		"move sp, %0;"			/* Set child sp */
-#endif
-                :
-                : "r" (childsp)
-        );
-
-	entry(argc, argv, envp);
-
-	/* Restore caller-preserved registers from a dedicated block */
-        __asm __volatile__(
-#ifdef __mips__
-		"la $12, __spawn_regstore;" 	/* t0 */
-		"lw $16, (0 * 4)($12);"		/* s0 */
-		"lw $17, (1 * 4)($12);"		/* s1 */
-		"lw $18, (2 * 4)($12);"		/* s2 */
-		"lw $19, (3 * 4)($12);"		/* s3 */
-		"lw $20, (4 * 4)($12);"		/* s4 */
-		"lw $21, (5 * 4)($12);"		/* s5 */
-		"lw $22, (6 * 4)($12);"		/* s6 */
-		"lw $23, (7 * 4)($12);"		/* s7 */
-		"lw $30, (8 * 4)($12);"		/* s8 */
-		"lw $27, (9 * 4)($12);"		/* k1 == tp */
-		"lw $29, (10 * 4)($12);"	/* sp */
-		"lw $28, (11 * 4)($12);"	/* gp */
-		"lw $30, (12 * 4)($12);"	/* fp */
-#else /* riscv */
+		"move t0, %1;"			/* t0 = entry */
+		"move a0, %2;"			/* a0 = argc */
+		"move a1, %3;"			/* a1 = argv */
+		"move a2, %4;"			/* a2 = envp */
+		"jalr t0;"
+		/* Restore caller-preserved registers from a dedicated block */
 		".option norelax;"
 		"lui t0, %%hi(__spawn_regstore);"
 		"addi t0, t0, %%lo(__spawn_regstore);"
@@ -229,7 +231,7 @@ posix_spawn(int *cpid, const char *path, void *fa __unused, void *at __unused,
 		"lw fp, (15 * 4)(t0);"
 #endif
                 :
-                :
+                : "r" (childsp), "r" (entry), "r" (argc), "r" (argv), "r" (envp)
         );
 
 	return(0);
