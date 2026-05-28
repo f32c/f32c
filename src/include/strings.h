@@ -28,6 +28,7 @@
 
 #define	bcopy(src, dst, len) memcpy(dst, src, len);
 #define bzero(b, len) memset(b, 0, len)
+#define	explicit_bzero(b, len) memset(b, 0, len)
 
 int	strcasecmp(const char *, const char *) __pure;
 int	strncasecmp(const char *, const char *, size_t) __pure;
