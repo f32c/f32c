@@ -45,7 +45,8 @@ bt(void)
 		"move %0, $29;"	// sp
 		"move %1, $31;"	// ra
 #else
-		";" // XXX MZ fixme riscv
+		"move %0, sp;"	// sp
+		"move %1, ra;"	// ra
 #endif
 		: "=r" (sp), "=r" (pc)
 	);
@@ -53,14 +54,26 @@ bt(void)
 	/* Find out this function's stack frame size, and adjust sp */
 	for (i = 0;; i += 4) {
 		instr = *((uint32_t *) ((uint32_t) bt) + i);
+#ifdef __mips
 		if (instr >> 16 == 0x27bd) /* addiu sp, sp, intoff */
+#else
+		if ((instr & 0xfffff) == 0x10113) /* addi sp, sp, intoff */
+#endif
 			break;
 	}
+#ifdef __mips
 	sp_off = instr & 0xffff;
-	sp -= sp_off;
+#else
+	sp_off = ((int) instr) >> 20;
+#endif
 
 next_frame:
+	sp -= sp_off;
+#ifdef __mips
 	pc -= 8;
+#else
+	pc -= 4;
+#endif
 	for (i = 0; __fntab[i].name != NULL; i++)
 		if (__fntab[i].base >= pc)
 			break;
@@ -75,18 +88,20 @@ next_frame:
 	/* Find out stack frame size and where the return address is stored */
 	for (ra_off = 0, sp_off = 0; pc >= __fntab[i].base; pc -= 4) {
 		instr = *((uint32_t *) pc);
-		switch (instr >> 16) {
-		case 0xafbf: /* sw ra, off(sp) */
+#ifdef __mips
+		if ((instr >> 16) == 0xafbf) /* sw ra, off(sp) */
 			ra_off = instr & 0xffff;
-			break;
-		case 0x27bd: /* addiu sp, sp, intoff*/
+		else if ((instr >> 16) == 0x27bd) /* addiu sp, sp, intoff*/
 			sp_off = instr & 0xffff;
-			break;
-		default:
-		}
+#else
+		if ((instr & 0x1ff07f) == 0x112023) /* sw ra, off(sp) */
+			ra_off = ((((int) instr) >> 25) << 5) |
+			    ((instr >> 7) & 0x1f);
+		else if ((instr & 0xfffff) == 0x10113) /* addi sp, sp, off */
+			sp_off = ((int) instr) >> 20;
+#endif
 	}
 
 	pc = *((uint32_t *) (sp + ra_off));
-	sp -= sp_off;
 	goto next_frame;
 }
