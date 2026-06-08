@@ -26,6 +26,7 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <string.h>
+#include <strings.h>
 
 #ifdef f32c
 #include <fatfs/ff.h>

@@ -29,6 +29,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <strings.h>
 #include <unistd.h>
 #include <time.h>
 
@@ -81,28 +82,6 @@ setup_f32c(void)
 #endif
 }
 
-
-#undef memcpy
-void *
-memcpy(void *dst, const void *src, size_t len)
-{
-	const char *from = src;
-	char *to = dst;
-
-	for(; len != 0; len--)
-		*to++ = *from++;
-	return (dst);
-}
-
-
-char *
-getenv(const char *name)
-{
-
-	if (strcmp(name, "TERM") == 0)
-		return ("ansi");	/* for CLS */
-	return ("");
-}
 
 pid_t
 getpid(void)
