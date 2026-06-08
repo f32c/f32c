@@ -177,6 +177,9 @@ endif
 # Garbage-collect unused section (unreferenced functions)
 MK_LDFLAGS += -gc-sections
 
+# Include relocation info
+MK_LDFLAGS += --emit-relocs
+
 # Pull in any module-specific linker flags
 MK_LDFLAGS += ${LDFLAGS}
 
@@ -187,6 +190,7 @@ CC = ${TOOLPREFIX}-gcc ${MK_CFLAGS} ${MK_STDINC} ${MK_INCLUDES}
 CXX = ${TOOLPREFIX}-g++ ${MK_CFLAGS} ${MK_CXXFLAGS} ${MK_STDINC} ${MK_INCLUDES} -fno-rtti -fno-exceptions
 AS = ${TOOLPREFIX}-gcc ${MK_CFLAGS} ${MK_ASFLAGS} ${MK_INCLUDES}
 LD = ${TOOLPREFIX}-ld ${MK_LDFLAGS}
+READELF = ${TOOLPREFIX}-readelf
 AR = ${TOOLPREFIX}-ar ${MK_ARFLAGS}
 OBJCOPY = ${TOOLPREFIX}-objcopy
 STRIP = ${TOOLPREFIX}-strip
@@ -247,7 +251,16 @@ ${BIN}: ${PROG} Makefile
 	${OBJCOPY} ${OBJFLAGS} -O binary ${PROG} ${BIN}
 
 ${PROG}: ${OBJS} Makefile
-	${LD} -o ${PROG} ${OBJS} ${MK_LIBS}
+	echo "void *__fntab;" > ${PROG}.fnt.c
+	${CC} -o ${PROG}.fnt.o ${PROG}.fnt.c
+	${LD} -o ${PROG} ${OBJS} ${PROG}.fnt.o ${MK_LIBS}
+	echo "extern void *_fdata;" > ${PROG}.fnt.c
+	echo "struct { const unsigned int base; const char *name; } const __fntab[] = {" >> ${PROG}.fnt.c
+	${READELF} -s ${PROG} | awk '$$4 == "FUNC"' | cut -w -f3,9 | sort | awk '{printf "\t{0x%s, \"%s\"},\n", $$1, $$2 }' >> ${PROG}.fnt.c
+	#echo "	{ 0, 0} };" >> ${PROG}.fnt.c
+	echo "	{ (uint32_t) &_fdata, 0} };" >> ${PROG}.fnt.c
+	${CC} -o ${PROG}.fnt.o ${PROG}.fnt.c
+	${LD} -o ${PROG} ${OBJS} ${PROG}.fnt.o ${MK_LIBS}
 ifdef DO_STRIP
 	${STRIP} ${STRIPFLAGS} ${PROG}
 endif
@@ -261,7 +274,7 @@ depend:
 	    | sed "s/\(^[^ ]*\):/${OBJDIR_ESC}\/\1:/" > ${OBJDIR}/.depend
 
 clean:
-	rm -f ${OBJS} ${PROG} ${BIN} ${HEX} ${SREC}
+	rm -f ${OBJS} ${PROG} ${BIN} ${HEX} ${SREC} ${PROG}.fnt.c ${PROG}.fnt.o
 
 cleandepend:
 	rm -f ${OBJDIR}/.depend

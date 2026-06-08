@@ -85,8 +85,8 @@ ifeq ($(LIB),c)
 
  CFILES += dev/sio.c dev/spi.c
 
- CFILES += sys/elf.c sys/execve.c sys/file.c sys/pipe.c sys/posix_spawn.c \
-        sys/signal.c sys/task.c sys/tty.c
+ CFILES += sys/backtrace.c sys/elf.c sys/execve.c sys/file.c sys/pipe.c \
+	sys/posix_spawn.c sys/signal.c sys/task.c sys/tty.c
 
  CFILES += fs/fatfs.c fs/ffunicode.c fs/ff_glue.c fs/diskio.c
  CFILES += fs/diskio_flash.c fs/diskio_fram.c fs/diskio_ram.c \
