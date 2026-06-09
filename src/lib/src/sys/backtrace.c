@@ -26,6 +26,9 @@
 #include <execinfo.h>
 #include <stdio.h>
 
+/* Must be overriden by the linker */
+__asm(".weak __fntab;");
+
 extern struct {
 	unsigned int base;
 	char *name;
@@ -74,9 +77,11 @@ next_frame:
 #else
 	pc -= 4;
 #endif
-	for (i = 0; __fntab[i].name != NULL; i++)
+
+	for (i = 0; __fntab[i].name != NULL; i++) {
 		if (__fntab[i].base >= pc)
 			break;
+	}
 
 	if (i == 0 || __fntab[i].name == NULL)
 		return;

@@ -251,9 +251,7 @@ ${BIN}: ${PROG} Makefile
 	${OBJCOPY} ${OBJFLAGS} -O binary ${PROG} ${BIN}
 
 ${PROG}: ${OBJS} Makefile
-	echo "void *__fntab;" > ${PROG}.fnt.c
-	${CC} -o ${PROG}.fnt.o ${PROG}.fnt.c
-	${LD} -o ${PROG} ${OBJS} ${PROG}.fnt.o ${MK_LIBS}
+	${LD} -o ${PROG} ${OBJS} ${MK_LIBS}
 	echo "extern void *_fdata;" > ${PROG}.fnt.c
 	echo "struct { const unsigned int base; const char *name; } const __fntab[] = {" >> ${PROG}.fnt.c
 	${READELF} -s ${PROG} | awk '$$4 == "FUNC"' | cut -w -f3,9 | sort | awk '{printf "\t{0x%s, \"%s\"},\n", $$1, $$2 }' >> ${PROG}.fnt.c
