@@ -254,8 +254,8 @@ ${PROG}: ${OBJS} Makefile
 	${LD} -o ${PROG} ${OBJS} ${MK_LIBS}
 	echo "extern void *_fdata;" > ${PROG}.fnt.c
 	echo "struct { const unsigned int base; const char *name; } const __fntab[] = {" >> ${PROG}.fnt.c
-	${READELF} -s ${PROG} | awk '$$4 == "FUNC"' | cut -w -f3,9 | sort | awk '{printf "\t{0x%s, \"%s\"},\n", $$1, $$2 }' >> ${PROG}.fnt.c
-	${READELF} -s ${PROG} | awk '$$8 == ".rodata"' | cut -w -f3 | awk '{printf "\t{0x%s, NULL} };\n", $$1 }' >> ${PROG}.fnt.c
+	${READELF} -s ${PROG} | awk '$$4 == "FUNC" {printf "%s %s\n", $$2, $$8}' | sort | awk '{printf "\t{0x%s, \"%s\"},\n", $$1, $$2 }' >> ${PROG}.fnt.c
+	${READELF} -s ${PROG} | awk '$$8 == ".rodata" {printf "\t{0x%s, NULL}\n};\n", $$2 }' >> ${PROG}.fnt.c
 	${CC} -o ${PROG}.fnt.o ${PROG}.fnt.c
 	${LD} -o ${PROG} ${OBJS} ${PROG}.fnt.o ${MK_LIBS}
 ifdef DO_STRIP
