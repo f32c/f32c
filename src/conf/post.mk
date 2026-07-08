@@ -212,6 +212,7 @@ ifndef OBJDIR
 endif
 # We need this crap for feeding sed when parsing .depend
 OBJDIR_ESC := $(shell echo ${OBJDIR} | sed -E "s%([\\./])%\\\\\1%g")
+FNTAB=${OBJDIR}/_fntab
 
 #
 # Autogenerate targets
@@ -252,12 +253,11 @@ ${BIN}: ${PROG} Makefile
 
 ${PROG}: ${OBJS} Makefile
 	${LD} -o ${PROG} ${OBJS} ${MK_LIBS}
-	echo "extern void *_fdata;" > ${PROG}.fnt.c
-	echo "struct { const unsigned int base; const char *name; } const __fntab[] = {" >> ${PROG}.fnt.c
-	${READELF} -s ${PROG} | awk '$$4 == "FUNC" {printf "%s %s\n", $$2, $$8}' | sort | awk '{printf "\t{0x%s, \"%s\"},\n", $$1, $$2 }' >> ${PROG}.fnt.c
-	${READELF} -s ${PROG} | awk '$$8 == ".rodata" {printf "\t{0x%s, NULL}\n};\n", $$2 }' >> ${PROG}.fnt.c
-	${CC} -o ${PROG}.fnt.o ${PROG}.fnt.c
-	${LD} -o ${PROG} ${OBJS} ${PROG}.fnt.o ${MK_LIBS}
+	printf "extern void *_fdata;\n\nstruct {\n\tconst unsigned int base;\n\tconst char *name;\n} const __fntab[] = {\n" > ${FNTAB}.c
+	${READELF} -s ${PROG} | awk '$$4 == "FUNC" {printf "%s %s\n", $$2, $$8}' | sort | awk '{printf "\t{0x%s, \"%s\"},\n", $$1, $$2 }' >> ${FNTAB}.c
+	${READELF} -s ${PROG} | awk '$$8 == ".rodata" {printf "\t{0x%s, NULL}\n};\n", $$2 }' >> ${FNTAB}.c
+	${CC} -o ${FNTAB}.o ${FNTAB}.c
+	${LD} -o ${PROG} ${OBJS} ${FNTAB}.o ${MK_LIBS}
 ifdef DO_STRIP
 	${STRIP} ${STRIPFLAGS} ${PROG}
 endif
@@ -271,7 +271,7 @@ depend:
 	    | sed "s/\(^[^ ]*\):/${OBJDIR_ESC}\/\1:/" > ${OBJDIR}/.depend
 
 clean:
-	rm -f ${OBJS} ${PROG} ${BIN} ${HEX} ${SREC} ${PROG}.fnt.c ${PROG}.fnt.o
+	rm -f ${OBJS} ${FNTAB}.* ${PROG} ${BIN} ${HEX} ${SREC}
 
 cleandepend:
 	rm -f ${OBJDIR}/.depend
