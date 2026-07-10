@@ -1639,7 +1639,7 @@ begin
 		R_mul_y(31 downto 0) <= CONV_SIGNED(UNSIGNED(EX_eff_reg2), 32);
 		if ID_EX_mult_signed then
 		    R_mul_x(32) <= EX_eff_reg1(31);
-		    R_mul_y(33 downto 32) <= (others => EX_eff_reg1(31));
+		    R_mul_y(33 downto 32) <= (others => EX_eff_reg2(31));
 		else
 		    R_mul_x(32) <= '0';
 		    R_mul_y(33 downto 32) <= (others => '0');
