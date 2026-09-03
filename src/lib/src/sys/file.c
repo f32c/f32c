@@ -183,7 +183,7 @@ fcntl(int fd, int cmd, ...)
 {
 	struct file *fp = fd2fp(fd);
 	va_list ap;
-	long arg;
+	int arg;
 
 	if (fp == NULL)
 		return (-1);
@@ -196,9 +196,12 @@ fcntl(int fd, int cmd, ...)
 	case IOCTL_TERMIOS:
 		return (termios_ioctl(fp, cmd, arg));
 	default:
-		errno = EINVAL;
-		return (-1);
+		if (fp->f_ops->fo_fcntl != NULL)
+			return (fp->f_ops->fo_fcntl(fp, cmd, (void *) arg));
 	};
+
+	errno = EINVAL;
+	return (-1);
 }
 
 
