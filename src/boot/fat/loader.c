@@ -464,6 +464,9 @@ boot:
 		sp = envp;
 	}
 
+	/* sp MUST be 64-bit aligned, even while running on 32-bit arch */
+	sp = (void *) (((uint32_t) sp) & 0xfffffff8);
+
 	/* Invalidate I-cache */
 #ifdef __mips__
 	for (i = 0x80000000; i < 0x80010000; i += 4) {
