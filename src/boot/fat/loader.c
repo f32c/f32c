@@ -45,7 +45,7 @@ extern void *__memtop;
 extern void *__ramdisk;
 extern void _start(void);
 
-static const char *bootfiles[] = {
+static char *bootfiles[] = {
 	"/boot.bin",
 	"/boot/cmd.bin",
 	NULL
@@ -241,7 +241,7 @@ main(void)
 	int argc = 0;
 	int i, c, loader_area, size, envc;
 	struct timespec tv0, tv1;
-	char execpath[128];
+	char *execpath = NULL;
 	uint32_t ramsiz = 0, ramdisksiz = 0;
 	uint32_t bytespersec, totsec;
 
@@ -353,15 +353,17 @@ main(void)
 	/* Fetch bootfile path */
 	if ((cp = getenv("bootfile")) != NULL) {
 		loadaddr = load_bin(cp, 1, &endaddr);
-		if (loadaddr != NULL)
+		if (loadaddr != NULL) {
+			execpath = alloca(strlen(cp) + 1);
 			strcpy(execpath, cp);
+		}
 	}
 
 	/* Fallback if bootfile not set or couldn't be loaded */
 	for (i = 0; loadaddr == NULL && bootfiles[i] != NULL; i++) {
 		loadaddr = load_bin(bootfiles[i], 1, &endaddr);
 		if (loadaddr != NULL)
-			strcpy(execpath, bootfiles[i]);
+			execpath = bootfiles[i];
 	}
 
 	/* Opportunity to escape to a file chooser prompt */
@@ -392,7 +394,9 @@ main(void)
 	/* All load attempts so far have failed, pick the file interactively */
 	while (loadaddr == NULL) {
 		printf("File to boot: ");
-		cp = gets_s(execpath, sizeof(execpath));
+		if (execpath == NULL)
+			execpath = alloca(128);
+		cp = gets_s(execpath, 128);
 		if (cp == NULL) {
 			/* XXX FIXME: unreachable due to ISIG SIGINT */
 			f32c_eip->cookie = F32C_EXECINFO_NOBOOT;
