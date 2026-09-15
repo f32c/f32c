@@ -152,15 +152,12 @@ load_bin(const char *fname, int verbose, void **endp)
 
 
 static void
-loadenv(const char *path)
+loadenv(FILE *fp)
 {
-	FILE *fp;
 	int len;
 	char *line = NULL;
 	size_t linecap;
 
-	fp = fopen(path, "r");
-	clearenv();
 	while (fp != NULL) {
 		len = getline(&line, &linecap, fp);
 		if (len < 0) {
@@ -199,15 +196,48 @@ strtomemsiz(const char *cp)
 }
 
 
+/* End of data / BSS section, word aligned */
+extern void __section("data") *_end;
+
+void *
+mem_probe(void *base)
+{
+	int i, val, done = 0;
+	uint32_t off;
+	volatile uint32_t *probe;
+	uint32_t *heap = base;
+
+	/* Attempt to guess the amount of available RAM, max 256 MB */
+	probe = heap;
+	off = 1024;
+	for (i = -1; i < 2 && off < (1 << 28) / sizeof(*heap); i++) {
+		val = probe[off];
+		probe[off] = ~val;
+		if (probe[off] != ~val)
+			done = 1;
+		probe[off] = val;
+		if (done)
+			break;
+		*probe = i;
+		if (probe[off] != i) {
+			off <<= 1;
+			i = -2;
+		}
+	}
+	i = ~((1 << 31) | off * sizeof(probe));
+	return (void *) ((uint32_t) &heap[off] - (((uint32_t) heap) & i));
+}
+
 void
 main(void)
 {
 	struct f32c_execinfo *f32c_eip = (void *) F32C_EXECINFO_ADDR;
 	void *loadaddr = NULL, *endaddr;
-	void *sp = (void *) 0x84000000;
+	void *sp = mem_probe((void *) 0x80000000);
 	char **argv = NULL;
 	char **envp = NULL;
 	char *cp;
+	FILE *fp;
 	int argc = 0;
 	int i, c, loader_area, size, envc;
 	struct timespec tv0, tv1;
@@ -245,7 +275,8 @@ main(void)
 	}
 
 	/* Parse and set the boot environment */
-	loadenv("/boot/loader.conf");
+	fp = fopen("/boot/loader.conf", "r");
+	loadenv(fp);
 
 	/* Adjust console baud rate */
 	if ((cp = getenv("bauds")) != NULL && (i = strtoul(cp, NULL, 0)) > 0)
@@ -371,8 +402,13 @@ main(void)
 	}
 
 	/* Ditch the boot environment and load the application env */
-	if ((cp = getenv("envfile")) != NULL)
-		loadenv(cp);
+	cp = getenv("envfile");
+	if (cp != NULL)
+		fp = fopen(cp, "r");
+	else
+		fp = NULL;
+	clearenv();
+	loadenv(fp);
 
 	/* alloca()te and populate argv and envp, C/P from execve() */
 	size = strlen(execpath) + 1;
@@ -417,6 +453,15 @@ boot:
 		loadaddr = (void *) &loadinfo[3];
 		if (loadaddr < __memtop)
 			sp = __memtop;
+	}
+
+	/*
+	 * Make sure sp points below argv, taking possible address aliasing
+	 * into account.
+	 */
+	if ((void *) envp > sp) {
+		envp = (void *) (((uint32_t) envp) & ((uint32_t) (sp - 1)));
+		sp = envp;
 	}
 
 	/* Invalidate I-cache */
