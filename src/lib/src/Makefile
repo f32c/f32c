@@ -110,6 +110,8 @@ ifeq ($(LIB),c)
  CFILES += stdtime/asctime.c stdtime/clock.c stdtime/gmtime.c stdtime/time.c \
 	stdtime/timegm.c
 
+ CFILES += inet/inet_addr.c inet/inet_ntoa.c inet/inet_ntop.c inet/inet_pton.c
+
  ifneq ($(ARCH),riscv)
   CFILES += gen/setjmperr.c gen/isr.c
  endif
