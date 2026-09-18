@@ -139,7 +139,7 @@ ifeq ($(LIB),m)
 	math/atan2.c math/acosh.c math/log1p.c math/atanh.c math/asinh.c \
 	math/tanh.c math/tan.c math/signbit.c math/nearbyint.c math/rintf.c \
 	math/fenv.c math/truncf.c math/trunc.c math/rint.c math/ldexp.c \
-	math/lgamma.c
+	math/lgamma.c math/s_round.c math/s_roundf.c
  ifneq ($(ARCH),riscv)
 #  CFLAGS += -G 0
  endif
