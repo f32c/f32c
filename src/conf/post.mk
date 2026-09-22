@@ -255,7 +255,7 @@ ${PROG}: ${OBJS} Makefile
 	${LD} -o ${PROG} ${OBJS} ${MK_LIBS}
 	printf "extern void *_fdata;\n\nstruct {\n\tconst unsigned int base;\n\tconst char *name;\n} const __fntab[] = {\n" > ${FNTAB}.c
 	${READELF} -s ${PROG} | awk '$$4 == "FUNC" {printf "%s %s\n", $$2, $$8}' | sort | awk '{printf "\t{0x%s, \"%s\"},\n", $$1, $$2 }' >> ${FNTAB}.c
-	${READELF} -s ${PROG} | awk '$$8 == ".rodata" {printf "\t{0x%s, NULL}\n};\n", $$2 }' >> ${FNTAB}.c
+	${READELF} -S ${PROG} | cut -d. -f2- | awk '$$1 == "text" && $$2 == "PROGBITS" {printf "\t{0x%s + 0x%s, NULL}\n};\n", $$3, $$5 }' >> ${FNTAB}.c
 	${CC} -o ${FNTAB}.o ${FNTAB}.c
 	${LD} -o ${PROG} ${OBJS} ${FNTAB}.o ${MK_LIBS}
 ifdef DO_STRIP
