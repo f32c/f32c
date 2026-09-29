@@ -430,7 +430,7 @@ stat(const char *path, struct stat *sb)
 	check_automount();
 	res = f_stat(path, &fno);
 	if (res)
-		return (res);
+		return (ffres2errno(res));
 
 	bzero(sb, sizeof(*sb));
 	sb->st_size = fno.fsize;
@@ -448,6 +448,8 @@ stat(const char *path, struct stat *sb)
 
 	if (fno.fattrib & AM_DIR)
 		sb->st_mode |= S_IFDIR;
+	else
+		sb->st_mode |= S_IFREG;
 	sb->st_mode |= S_IRUSR | S_IRGRP | S_IROTH;
 	if ((fno.fattrib & AM_RDO) == 0)
 		sb->st_mode |= S_IWUSR | S_IWGRP | S_IWOTH;
