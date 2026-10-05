@@ -233,7 +233,7 @@ main(void)
 {
 	struct f32c_execinfo *f32c_eip = (void *) F32C_EXECINFO_ADDR;
 	void *loadaddr = NULL, *endaddr;
-	void *sp = mem_probe((void *) 0x80000000);
+	void *sp = mem_probe((void *) &f32c_eip[1]);
 	char **argv = NULL;
 	char **envp = NULL;
 	char *cp;
