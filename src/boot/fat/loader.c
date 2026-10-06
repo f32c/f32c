@@ -239,10 +239,11 @@ main(void)
 	char *cp;
 	FILE *fp;
 	int argc = 0;
-	int i, c, loader_area, size, envc;
+	int i, c, size, envc = 0;
 	struct timespec tv0, tv1;
 	char *execpath = NULL;
-	uint32_t ramsiz = 0, ramdisksiz = 0;
+	uint32_t ramsiz = ((uint32_t) sp) - F32C_EXECINFO_ADDR;
+	uint32_t ramdisksiz = 0;
 	uint32_t bytespersec, totsec;
 
 	/* If f32c trampoline requested, load the binary, set the env, boot */
@@ -303,16 +304,20 @@ main(void)
 #endif
 	    " FAT bootloader v 0.7 (" __DATE__ ")\n");
 
+	/* RAM size guesswork sanity check */
+	if ((ramsiz & 0x3ff) != 0) {
+		printf("RAM size of 0x%x not aligned to 1024 B, ignoring\n",
+		    ramsiz);
+		ramsiz = 0;
+	}
+
+	/* RAM disk initialization */
 	do {
-		if (ramsiz == 0)
+		i = (uint32_t) &_start;
+		i &= (uint32_t) sp - 1;
+		ramsiz -= (uint32_t) sp - i;
+		if (ramsiz <= 0)
 			break;
-		if ((ramsiz & 0x3ff) != 0) {
-			printf("RAM size of 0x%x not aligned to 1024 B, "
-			    "ignoring\n", ramsiz);
-			break;
-		}
-		loader_area = (uint32_t) sp - (uint32_t) &_start;
-		ramsiz -= loader_area;
 		__memtop = (void *) 0x80000000 + ramsiz;
 
 		if (ramdisksiz == 0)
@@ -434,7 +439,6 @@ main(void)
 		envp[envc] = cp;
 		cp += strlen(cp) + 1;
 	}
-	envp[envc] = NULL;
 	while ((((int) cp) & 0x3) != 0)
 		*cp++ = 0;
 
@@ -467,6 +471,7 @@ boot:
 		envp = (void *) (((uint32_t) envp) & ((uint32_t) (sp - 1)));
 		sp = envp;
 	}
+	envp[envc] = NULL;
 
 	/* sp MUST be 64-bit aligned, even while running on 32-bit arch */
 	sp = (void *) (((uint32_t) sp) & 0xfffffff8);
