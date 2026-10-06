@@ -234,14 +234,12 @@ main(void)
 	struct f32c_execinfo *f32c_eip = (void *) F32C_EXECINFO_ADDR;
 	void *loadaddr = NULL, *endaddr;
 	void *sp = mem_probe((void *) &f32c_eip[1]);
-	char **argv = NULL;
-	char **envp = NULL;
-	char *cp;
+	char **argv, **envp, *cp;
+	char *execpath = NULL;
 	FILE *fp;
 	int argc = 0;
 	int i, c, size, envc = 0;
 	struct timespec tv0, tv1;
-	char *execpath = NULL;
 	uint32_t ramsiz = ((uint32_t) sp) - F32C_EXECINFO_ADDR;
 	uint32_t ramdisksiz = 0;
 	uint32_t bytespersec, totsec;
@@ -254,7 +252,7 @@ main(void)
 		f32c_eip->cookie = 0xdeadc0de;
 
 		/* Allocate space for argv / envp / strings at local stack */
-		sp = argv = alloca(f32c_eip->size);
+		argv = alloca(f32c_eip->size);
 		environ = envp = &argv[argc];
 
 		/* Safely move argv / envp / strings to the local stack */
@@ -459,8 +457,6 @@ boot:
 		loadinfo[1] = (uint32_t) __memtop;
 		loadinfo[2] = (uint32_t) __ramdisk;
 		loadaddr = (void *) &loadinfo[3];
-		if (loadaddr < __memtop)
-			sp = __memtop;
 	}
 
 	/*
@@ -468,10 +464,13 @@ boot:
 	 * into account.
 	 */
 	if ((void *) envp > sp) {
+		argv = (void *) (((uint32_t) argv) & ((uint32_t) (sp - 1)));
 		envp = (void *) (((uint32_t) envp) & ((uint32_t) (sp - 1)));
-		sp = envp;
+		sp = argv;
 	}
 	envp[envc] = NULL;
+	if (__memtop != NULL && loadaddr < __memtop)
+		sp = __memtop;
 
 	/* sp MUST be 64-bit aligned, even while running on 32-bit arch */
 	sp = (void *) (((uint32_t) sp) & 0xfffffff8);
