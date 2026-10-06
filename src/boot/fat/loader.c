@@ -238,7 +238,7 @@ main(void)
 	char *execpath = NULL;
 	FILE *fp;
 	int argc = 0;
-	int i, c, size, envc = 0;
+	int i, c, size, envc;
 	struct timespec tv0, tv1;
 	uint32_t ramsiz = ((uint32_t) sp) - F32C_EXECINFO_ADDR;
 	uint32_t ramdisksiz = 0;
@@ -265,6 +265,7 @@ main(void)
 		/* Adjust argv / envp pointer addresses */
 		for (i = 0; argv[i] != NULL; i++)
 			argv[i] += (argv - f32c_eip->argv) * sizeof(char *);
+		envc = i - argc;
 
 		loadaddr = load_bin(argv[0], 0, &endaddr);
 		if (loadaddr != NULL)
