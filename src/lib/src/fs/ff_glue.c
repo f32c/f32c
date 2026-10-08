@@ -215,12 +215,16 @@ unlink(const char *path)
 int
 chdir(const char *path) {
 	int res;
+	char buf[3];
 
 	check_automount();
-	if (path[1] == ':' && path[2] == 0)
-		res = f_chdrive(path);
-	else
-		res = f_chdir(path);
+	res = f_chdir(path);
+	if (res == FR_OK && path[1] == ':') {
+		buf[0] = path[0];
+		buf[1] = ':';
+		buf[2] = 0;
+		f_chdrive(buf);
+	}
 	return(ffres2errno(res));
 }
 
