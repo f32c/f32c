@@ -162,11 +162,11 @@ posix_spawn(int *cpid, const char *path, void *fa __unused, void *at __unused,
 		"sw $29, (10 * 4)($12);"	/* sp */
 		"sw $28, (11 * 4)($12);"	/* gp */
 		"sw $30, (12 * 4)($12);"	/* fp */
-		"move $29, %0;"			/* Set child sp */
-		"move $2, %1;"			/* v0 = entry */
-		"move $4, %2;"			/* a0 = argc */
-		"move $5, %3;"			/* a1 = argv */
-		"move $6, %4;"			/* a2 = envp */
+		"move $4, %0;"			/* a0 = argc */
+		"move $5, %1;"			/* a1 = argv */
+		"move $6, %2;"			/* a2 = envp */
+		"move $2, %3;"			/* v0 = entry */
+		"move $29, %4;"			/* sp = childsp */
 		"jalr $2;"
 		/* Restore caller-preserved registers from a dedicated block */
 		"lui $12, %%hi(__spawn_regstore);" /* t0, hi */
@@ -202,11 +202,11 @@ posix_spawn(int *cpid, const char *path, void *fa __unused, void *at __unused,
 		"sw sp, (13 * 4)(t0);"
 		"sw gp, (14 * 4)(t0);"
 		"sw fp, (15 * 4)(t0);"
-		"move sp, %0;"			/* Set child sp */
-		"move t0, %1;"			/* t0 = entry */
-		"move a0, %2;"			/* a0 = argc */
-		"move a1, %3;"			/* a1 = argv */
-		"move a2, %4;"			/* a2 = envp */
+		"move a0, %0;"			/* a0 = argc */
+		"move a1, %1;"			/* a1 = argv */
+		"move a2, %2;"			/* a2 = envp */
+		"move t0, %3;"			/* t0 = entry */
+		"move sp, %4;"			/* sp = childsp */
 		"jalr t0;"
 		/* Restore caller-preserved registers from a dedicated block */
 		".option norelax;"
@@ -231,7 +231,7 @@ posix_spawn(int *cpid, const char *path, void *fa __unused, void *at __unused,
 		"lw fp, (15 * 4)(t0);"
 #endif
                 :
-                : "r" (childsp), "r" (entry), "r" (argc), "r" (argv), "r" (envp)
+                : "r" (argc), "r" (argv), "r" (envp), "r" (entry), "r" (childsp)
         );
 
 	return(0);
