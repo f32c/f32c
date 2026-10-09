@@ -46,6 +46,7 @@ size_t strlcpy(char * __restrict, const char * __restrict, size_t);
 size_t strlcat(char * __restrict, const char * __restrict, size_t);
 size_t strnlen(const char *, size_t);
 char *strncat(char * __restrict, const char * __restrict, size_t);
+char *strndup(const char *, size_t);
 
 void *memchr(const void *, int, size_t) __pure;
 void *memmove(void *, const void *, size_t);
