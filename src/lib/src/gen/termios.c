@@ -45,7 +45,7 @@ int
 tcgetattr(int fd, struct termios *t)
 {
 
-	return (_ioctl(fd, TIOCGETA, t));
+	return (ioctl(fd, TIOCGETA, t));
 }
 
 int
@@ -60,11 +60,11 @@ tcsetattr(int fd, int opt, const struct termios *t)
 	}
 	switch (opt & ~TCSASOFT) {
 	case TCSANOW:
-		return (_ioctl(fd, TIOCSETA, t));
+		return (ioctl(fd, TIOCSETA, t));
 	case TCSADRAIN:
-		return (_ioctl(fd, TIOCSETAW, t));
+		return (ioctl(fd, TIOCSETAW, t));
 	case TCSAFLUSH:
-		return (_ioctl(fd, TIOCSETAF, t));
+		return (ioctl(fd, TIOCSETAF, t));
 	default:
 		errno = EINVAL;
 		return (-1);
@@ -81,13 +81,13 @@ termios_ioctl(struct file *fp, int cmd, long arg)
 		return (-1);
 	}
 
-	switch (cmd & ~TCSASOFT) {
-	case IOCTL_TERMIOS | TIOCGETA:
+	switch (cmd) {
+	case TIOCGETA:
 		*tp = fp->f_tty->t_termios;
 		return (0);
-	case IOCTL_TERMIOS | TIOCSETA:
-	case IOCTL_TERMIOS | TIOCSETAW:
-	case IOCTL_TERMIOS | TIOCSETAF:
+	case TIOCSETA:
+	case TIOCSETAW:
+	case TIOCSETAF:
 		fp->f_tty->t_termios = *tp;
 		return (0);
 	default:

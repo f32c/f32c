@@ -29,6 +29,7 @@
 #include <string.h>
 
 #include <sys/ioctl.h>
+#include <sys/ioccom.h>
 #include <sys/fcntl.h>
 #include <sys/file.h>
 #include <sys/task.h>
@@ -179,6 +180,29 @@ write(int fd, const void *buf, size_t nbytes)
 
 
 int
+ioctl(int fd, unsigned long cmd, ...)
+{
+	struct file *fp = fd2fp(fd);
+	va_list ap;
+	int arg;
+
+	if (fp == NULL)
+		return (-1);
+
+	va_start(ap, cmd);
+	arg = va_arg(ap, long);
+	va_end(ap);
+
+	switch (IOCGROUP(cmd)) {
+	case 't':
+		return (termios_ioctl(fp, cmd, arg));
+	default:
+		errno = EINVAL;
+		return (-1);
+	};
+}
+
+int
 fcntl(int fd, int cmd, ...)
 {
 	struct file *fp = fd2fp(fd);
@@ -192,13 +216,8 @@ fcntl(int fd, int cmd, ...)
 	arg = va_arg(ap, long);
 	va_end(ap);
 
-	switch (cmd & IOCTL_MAJOR_MASK) {
-	case IOCTL_TERMIOS:
-		return (termios_ioctl(fp, cmd, arg));
-	default:
-		if (fp->f_ops->fo_fcntl != NULL)
-			return (fp->f_ops->fo_fcntl(fp, cmd, (void *) arg));
-	};
+	if (fp->f_ops->fo_fcntl != NULL)
+		return (fp->f_ops->fo_fcntl(fp, cmd, (void *) arg));
 
 	errno = EINVAL;
 	return (-1);
