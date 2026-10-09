@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #include <sys/types.h>			/* XXX adds too much pollution. */
-//#include <sys/unistd.h>
+#include <sys/unistd.h>
 #include <sys/select.h>
 #include <sys/_null.h>
 #include <sys/_types.h>
