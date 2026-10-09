@@ -37,6 +37,7 @@ typedef int errno_t;
 #endif
 
 char *strcat(char * __restrict, const char * __restrict);
+char *strchrnul(const char *, int);
 char *strdup(const char *);
 char *strstr(const char *, const char *) __pure;
 char *strtok(char * __restrict, const char * __restrict);
@@ -49,6 +50,7 @@ char *strncat(char * __restrict, const char * __restrict, size_t);
 char *strndup(const char *, size_t);
 
 void *memchr(const void *, int, size_t) __pure;
+void *memrchr(const void *, int, size_t) __pure;
 void *memmove(void *, const void *, size_t);
 void *memset(void *, int, size_t);
 errno_t memset_s(void *, rsize_t, int, size_t);

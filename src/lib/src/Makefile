@@ -100,8 +100,9 @@ ifeq ($(LIB),c)
 	stdlib/qsort.c stdlib/random.c stdlib/strtol.c stdlib/strtoll.c \
 	stdlib/strtoull.c
 
- CFILES += string/memcmp.c string/memcpy.c string/memmove.c string/memset.c \
-	string/stpncpy.c string/strdup.c \
+ CFILES += string/memchr.c string/memrchr.c \
+	string/memcmp.c string/memcpy.c string/memmove.c string/memset.c \
+	string/stpncpy.c string/strchrnul.c string/strdup.c string/strndup.c \
 	string/strcasecmp.c string/strcat.c string/strcmp.c string/strncmp.c \
 	string/strcpy.c string/strerror.c string/strlcat.c string/strlcpy.c \
 	string/strncpy.c string/strncat.c string/strnlen.c string/strstr.c \
