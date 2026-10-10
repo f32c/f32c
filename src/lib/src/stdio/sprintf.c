@@ -31,8 +31,8 @@
 extern int _xvprintf(char const *, void(*)(int, void *), void *, va_list);
 
 struct snprintf_arg {
-	char    *str;
-	size_t  remain;
+	char	*str;
+	size_t	remain;
 };
 
 
@@ -56,6 +56,21 @@ vsnprintf(char *str, size_t size, const char *fmt, va_list ap)
 
 	info.str = str;
 	info.remain = size;
+	retval = _xvprintf(fmt, snprintf_pchar, &info, ap);
+	if (info.remain >= 1)
+		*info.str++ = '\0';
+	return (retval);
+}
+
+
+__attribute__((optimize("-Os"))) int
+vsprintf(char *str, const char *fmt, va_list ap)
+{
+	struct snprintf_arg info;
+	int retval;
+
+	info.str = str;
+	info.remain = 0;
 	retval = _xvprintf(fmt, snprintf_pchar, &info, ap);
 	if (info.remain >= 1)
 		*info.str++ = '\0';
