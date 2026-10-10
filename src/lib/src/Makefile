@@ -81,7 +81,8 @@ ifeq ($(LIB),c)
  include builtins/Makefile.inc
 
  CFILES += gen/div.c gen/div64.c gen/mul.c \
-	gen/assert.c gen/isatty.c gen/termios.c
+	gen/assert.c gen/isatty.c gen/termios.c \
+	gen/getprogname.c gen/setprogname.c
 
  CFILES += dev/sio.c dev/spi.c
 
@@ -95,7 +96,7 @@ ifeq ($(LIB),c)
  CFILES += stdio/getdelim.c stdio/getline.c stdio/gets.c \
 	stdio/perror.c stdio/printf.c stdio/sprintf.c stdio/sscanf.c
 
- CFILES += stdlib/abs.c stdlib/atoi.c stdlib/getenv.c \
+ CFILES += stdlib/abs.c stdlib/atoi.c stdlib/getenv.c stdlib/getopt.c \
 	stdlib/labs.c stdlib/malloc.c \
 	stdlib/qsort.c stdlib/random.c stdlib/strtol.c stdlib/strtoll.c \
 	stdlib/strtoull.c

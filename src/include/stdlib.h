@@ -106,5 +106,8 @@ int	putenv(char *);
 char	*getenv(const char *);
 int	setenv(const char *, const char *, int);
 int	unsetenv(const char *);
+const char *_getprogname(void);
+#define getprogname() _getprogname()
+void	setprogname(const char *);
 
 #endif /* !_STDLIB_H_ */
