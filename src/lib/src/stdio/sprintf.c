@@ -79,21 +79,15 @@ vsprintf(char *str, const char *fmt, va_list ap)
 
 
 __attribute__((optimize("-Os"))) int
-sprintf(char *str, const char *fmt, ...)
+sprintf(char * __restrict str, char const * __restrict fmt, ...)
 {
+	int ret;
 	va_list ap;
-	struct snprintf_arg info;
-	int retval;
  
-	info.str = str;
-	info.remain = 0;
-
 	va_start(ap, fmt);
-	retval = _xvprintf(fmt, snprintf_pchar, &info, ap);
+	ret = vsprintf(str, fmt, ap);
 	va_end(ap);
- 
-	*info.str = 0;
-	return (retval);
+	return (ret);
 }
 
 
