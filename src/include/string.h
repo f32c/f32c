@@ -26,6 +26,8 @@
 #ifndef	_STRING_H_
 #define	_STRING_H_
 
+#include <strings.h>
+
 #ifndef _RSIZE_T_DEFINED
 #define _RSIZE_T_DEFINED
 typedef size_t rsize_t;
