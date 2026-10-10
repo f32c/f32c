@@ -247,6 +247,15 @@ ftruncate(int fd, off_t length)
  * Stream-IO (FILE) support
  */
 
+size_t
+fwrite(const void * __restrict buf, size_t size, size_t count,
+    FILE * __restrict fp)
+{
+
+	return (write(fp->_fd, buf, size * count));
+}
+
+
 int
 fputc(int c, FILE *fp)
 {
@@ -353,6 +362,14 @@ fopen(const char *path, const char *mode)
 	fp->_fd = fd;
 
 	return (fp);
+}
+
+
+int
+fflush(FILE *)
+{
+
+	return (0);
 }
 
 
