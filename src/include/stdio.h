@@ -72,9 +72,11 @@ void perror(const char *);
 
 FILE	*fopen(const char * __restrict, const char * __restrict);
 FILE	*fdopen(int, const char *);
+int	fflush(FILE *);
 int	fclose(FILE *);
 int	fileno(FILE *);
 int	fputc(int, FILE *);
+#define	putc(c, f) fputc(c, f)
 int	putchar(int);
 int	puts(const char *);
 int	fputs(const char *, FILE *);
