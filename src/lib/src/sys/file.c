@@ -23,6 +23,7 @@
  * SUCH DAMAGE.
  */
 
+#include <poll.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -176,6 +177,27 @@ write(int fd, const void *buf, size_t nbytes)
 		wrote = fp->f_ops->fo_write(fp, buf, nbytes);
 
 	return (wrote);
+}
+
+
+int
+poll(struct pollfd fds[], nfds_t nfds, int timeout)
+{
+	struct file *fp;
+	int i, ready;
+
+	for (i = 0, ready = 0; i < nfds; i++) {
+		fp = fd2fp(fds[i].fd);
+		if (fp->f_ops->fo_poll == NULL) {
+			fds[i].revents = 0;
+			continue;
+		}
+		fds[i].revents = fp->f_ops->fo_poll(fp, fds[i].events);
+		if (fds[i].revents)
+			ready++;
+	}
+
+	return (ready);
 }
 
 

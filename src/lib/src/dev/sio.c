@@ -24,6 +24,7 @@
  */
 
 #include <fcntl.h>
+#include <poll.h>
 #include <stdlib.h>
 
 #include <sys/file.h>
@@ -45,15 +46,17 @@ extern int fd_ref(struct file *); /* XXX fixinclude */
 
 static int sio_read(struct file *, void *, size_t);
 static int sio_write(struct file *, const void *, size_t);
+static int sio_poll(struct file *, int);
 
 static struct fileops sio_fileops = {
 	.fo_read = &sio_read,
 	.fo_write = &sio_write,
+	.fo_poll = &sio_poll
 };
 
 struct sio_state {
 	uint32_t	s_io_port;
-	uint16_t	s_rxbuf_head; /* Managed by sio_probe_rx() */
+	uint16_t	s_rxbuf_head; /* Managed by sio_probe() */
 	uint16_t	s_rxbuf_tail; /* Managed by sio_read() */
 	uint16_t	s_hw_rx_overruns;
 	uint16_t	s_sw_rx_overruns;
@@ -131,9 +134,8 @@ sio_open(int unit)
 }
 
 static int
-sio_probe_rx(struct file *fp)
+sio_probe(struct sio_state *sio, struct file *fp)
 {
-	struct sio_state *sio = fp->f_priv;
 	int c, s, rxbuf_head_next;
 
 	for (;;) {
@@ -175,7 +177,7 @@ sio_read(struct file *fp, void *buf, size_t nbytes)
 
 	for (i = 0; i < nbytes;) {
 		for (;;) {
-			sio_probe_rx(fp);
+			sio_probe(sio, fp);
 			empty = sio->s_rxbuf_head == sio->s_rxbuf_tail;
 			if (!empty)
 				break;
@@ -213,7 +215,7 @@ sio_write(struct file *fp, const void *buf, size_t nbytes)
 	int c, i;
 
 	for (i = 0; i < nbytes || tios_i != tios_n;) {
-		for (; (sio_probe_rx(fp) & SIO_TX_BUSY) ||
+		for (; sio_probe(sio, fp) ||
 		    (TTY_OBLOCKED(fp->f_tty) && (tios_i == tios_n));) {
 			if (fp->f_flags & O_NONBLOCK) {
 				if (i != 0)
@@ -248,6 +250,18 @@ sio_write(struct file *fp, const void *buf, size_t nbytes)
 	return nbytes;
 }
 
+static int
+sio_poll(struct file *fp, int events)
+{
+	struct sio_state *sio = fp->f_priv;
+	int revents = 0;
+
+	if (sio_probe(sio, fp) && (events & POLLOUT))
+		revents |= POLLOUT;
+	if ((events & POLLIN) && (sio->s_rxbuf_head != sio->s_rxbuf_tail))
+		revents |= POLLIN;
+	return (revents);
+}
 
 /* Legacy f32c functions, should go away */
 
