@@ -181,9 +181,9 @@ sio_read(struct file *fp, void *buf, size_t nbytes)
 			empty = sio->s_rxbuf_head == sio->s_rxbuf_tail;
 			if (!empty)
 				break;
+			if (i != 0)
+				return (i);
 			if (fp->f_flags & O_NONBLOCK) {
-				if (i != 0)
-					return (i);
 				errno = EAGAIN;
 				return (-1);
 			}
