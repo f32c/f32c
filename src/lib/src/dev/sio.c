@@ -224,8 +224,10 @@ sio_write(struct file *fp, const void *buf, size_t nbytes)
 				return (-1);
 			}
 			if (task->ts_sigf & 2) {
-				errno = EINTR;
 				task->ts_sigf &= ~2;
+				if (i != 0)
+					return (i);
+				errno = EINTR;
 				return (-1);
 			}
 			/* XXX TODO: notify system we are blocked, yield() */
