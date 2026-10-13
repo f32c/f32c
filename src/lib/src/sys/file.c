@@ -136,8 +136,10 @@ close(int fd)
 	struct file *fp = fd2fp(fd);
 	int res;
 
-	if (fp == NULL)
+	if (fp == NULL) {
+		errno = EBADF;
 		return (-1);
+	}
 
 	ts->ts_files[fd] = NULL;
 	if (--(fp->f_refc))
@@ -158,12 +160,12 @@ ssize_t
 read(int fd, void *buf, size_t nbytes)
 {
 	struct file *fp = fd2fp(fd);
-	ssize_t got = -1;
 
-	if (fp != NULL)
-		got = fp->f_ops->fo_read(fp, buf, nbytes);
-
-	return (got);
+	if (fp == NULL) {
+		errno = EBADF;
+		return (-1);
+	}
+	return (fp->f_ops->fo_read(fp, buf, nbytes));
 }
 
 
@@ -171,12 +173,12 @@ ssize_t
 write(int fd, const void *buf, size_t nbytes)
 {
 	struct file *fp = fd2fp(fd);
-	ssize_t wrote = -1;
 
-	if (fp != NULL)
-		wrote = fp->f_ops->fo_write(fp, buf, nbytes);
-
-	return (wrote);
+	if (fp == NULL) {
+		errno = EBADF;
+		return (-1);
+	}
+	return (fp->f_ops->fo_write(fp, buf, nbytes));
 }
 
 
@@ -184,10 +186,22 @@ int
 poll(struct pollfd fds[], nfds_t nfds, int timeout)
 {
 	struct file *fp;
+	struct timespec start, now;
 	int i, ready;
+	int64_t delta_ns, timeo_ns;
 
+	if (timeout > 0) {
+		clock_gettime(CLOCK_MONOTONIC, &start);
+		timeo_ns = timeout * 1000;
+	}
+
+again:
 	for (i = 0, ready = 0; i < nfds; i++) {
 		fp = fd2fp(fds[i].fd);
+		if (fp == NULL) {
+			errno = EBADF;
+			return (-1);
+		}
 		if (fp->f_ops->fo_poll == NULL) {
 			fds[i].revents = 0;
 			continue;
@@ -196,7 +210,21 @@ poll(struct pollfd fds[], nfds_t nfds, int timeout)
 		if (fds[i].revents)
 			ready++;
 	}
+	if (ready != 0 || timeout == 0)
+		return (ready);
 
+	/* XXX todo: EINTR */
+	/* XXX todo: sched_yield() */
+
+	if (timeout < 0)
+		goto again;
+
+	clock_gettime(CLOCK_MONOTONIC, &now);
+	delta_ns = now.tv_nsec - start.tv_nsec;
+	if (start.tv_sec > now.tv_sec)
+		delta_ns += (now.tv_sec - start.tv_sec) * 1000000;
+	if (delta_ns < timeo_ns)
+		goto again;
 	return (ready);
 }
 
