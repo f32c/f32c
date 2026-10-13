@@ -187,13 +187,9 @@ poll(struct pollfd fds[], nfds_t nfds, int timeout)
 {
 	struct file *fp;
 	struct timespec start, now;
-	int i, ready;
-	int64_t delta_ns, timeo_ns;
+	int i, ready, delta;
 
-	if (timeout > 0) {
-		clock_gettime(CLOCK_MONOTONIC, &start);
-		timeo_ns = timeout * 1000;
-	}
+	clock_gettime(CLOCK_MONOTONIC, &start);
 
 again:
 	for (i = 0, ready = 0; i < nfds; i++) {
@@ -220,10 +216,9 @@ again:
 		goto again;
 
 	clock_gettime(CLOCK_MONOTONIC, &now);
-	delta_ns = now.tv_nsec - start.tv_nsec;
-	if (start.tv_sec > now.tv_sec)
-		delta_ns += (now.tv_sec - start.tv_sec) * 1000000;
-	if (delta_ns < timeo_ns)
+	delta = (now.tv_sec - start.tv_sec) * 1000;
+	delta += (now.tv_nsec - start.tv_nsec) / 1000000;
+	if (delta < timeout)
 		goto again;
 	return (ready);
 }
