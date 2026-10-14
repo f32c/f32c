@@ -70,10 +70,9 @@ vsprintf(char *str, const char *fmt, va_list ap)
 	int retval;
 
 	info.str = str;
-	info.remain = 0;
+	info.remain = INT_MAX;
 	retval = _xvprintf(fmt, snprintf_pchar, &info, ap);
-	if (info.remain >= 1)
-		*info.str++ = '\0';
+	*info.str++ = '\0';
 	return (retval);
 }
 
