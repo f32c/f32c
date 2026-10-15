@@ -1646,6 +1646,7 @@ cli(void)
 
 	getcwd(line, 128);
 	setenv("PWD", line, 1);
+	do_exit = 0;
 
 	do {
 		interrupt = 0;
@@ -1734,7 +1735,4 @@ retok:
 			i = task_create(cmdswitch[i].handler, argc, argv);
 		}
 	} while (!do_exit);
-	do_exit = 0;
-
-	exit(0);
 }
