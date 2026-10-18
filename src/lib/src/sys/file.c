@@ -39,6 +39,12 @@
 /* XXX move to a .h ? */
 extern int ff_open(struct file *fp, const char *path, int flags, ...);
 
+extern struct file __sio0_file;
+
+static struct file *sio0_stdfiles[3] = {
+	&__sio0_file, &__sio0_file, &__sio0_file
+};
+
 
 static int
 fd_findfree(int min)
@@ -93,6 +99,11 @@ fd2fp(int fd)
 {
 	struct task *ts = TD_TASK(curthread);
 	struct file *fp = NULL;
+
+	if (ts->ts_files == NULL) {
+		ts->ts_files = sio0_stdfiles;
+		ts->ts_maxfiles = 3;
+	}
 
 	if (fd < 0 || fd >= ts->ts_maxfiles ||
 	    (fp = (struct file *) ts->ts_files[fd]) == NULL)
