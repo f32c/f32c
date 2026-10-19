@@ -46,6 +46,15 @@ static struct file *sio0_stdfiles[3] = {
 };
 
 
+static void
+sio0_bootstrap(struct task *ts)
+{
+
+	ts->ts_files = sio0_stdfiles;
+	ts->ts_maxfiles = 3;
+}
+
+
 static int
 fd_findfree(int min)
 {
@@ -71,6 +80,9 @@ fd_ref(struct file *fp)
 
 	if (fp == NULL)
 		return (-1);
+
+	if (ts->ts_files == NULL)
+		sio0_bootstrap(ts);
 
 	fd = fd_findfree(0);
 	if (fd < 0) {
@@ -100,10 +112,8 @@ fd2fp(int fd)
 	struct task *ts = TD_TASK(curthread);
 	struct file *fp = NULL;
 
-	if (ts->ts_files == NULL) {
-		ts->ts_files = sio0_stdfiles;
-		ts->ts_maxfiles = 3;
-	}
+	if (ts->ts_files == NULL)
+		sio0_bootstrap(ts);
 
 	if (fd < 0 || fd >= ts->ts_maxfiles ||
 	    (fp = (struct file *) ts->ts_files[fd]) == NULL)
