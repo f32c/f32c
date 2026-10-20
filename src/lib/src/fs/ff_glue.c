@@ -159,6 +159,7 @@ creat(const char *path, mode_t mode __unused)
 }
 
 
+#pragma weak lseek
 off_t
 lseek(int d, off_t offset, int whence)
 {
@@ -197,6 +198,7 @@ lseek(int d, off_t offset, int whence)
 }
 
 
+#pragma weak unlink
 int
 unlink(const char *path)
 {
@@ -212,6 +214,7 @@ unlink(const char *path)
 }
 
 
+#pragma weak chdir
 int
 chdir(const char *path) {
 	int res;
@@ -229,6 +232,7 @@ chdir(const char *path) {
 }
 
 
+#pragma weak getcwd
 char *
 getcwd(char *buf, size_t size)
 {
@@ -250,6 +254,7 @@ getcwd(char *buf, size_t size)
 };
 
 
+#pragma weak mkdir
 int
 mkdir(const char *path, mode_t mode)
 {
@@ -261,6 +266,7 @@ mkdir(const char *path, mode_t mode)
 };
 
 
+#pragma weak rmdir
 int
 rmdir(const char *path)
 {
@@ -272,6 +278,7 @@ rmdir(const char *path)
 };
 
 
+#pragma weak rename
 int
 rename(const char *from, const char *to)
 {
@@ -283,6 +290,7 @@ rename(const char *from, const char *to)
 };
 
 
+#pragma weak opendir
 DIR *
 opendir(const char *path)
 {
@@ -305,6 +313,7 @@ opendir(const char *path)
 };
 
 
+#pragma weak readdir
 struct dirent *
 readdir(DIR *dirp)
 {
@@ -333,6 +342,7 @@ readdir(DIR *dirp)
 };
 
 
+#pragma weak closedir
 int
 closedir(DIR *dirp)
 {
@@ -424,6 +434,7 @@ ff_open(struct file *fp, const char *path, int flags, ...)
 }
 
 
+#pragma weak stat
 int
 stat(const char *path, struct stat *sb)
 {
@@ -464,6 +475,7 @@ stat(const char *path, struct stat *sb)
 }
 
 
+#pragma weak getfsstat
 int
 getfsstat(struct statfs *buf, long bufsize, int mode)
 {

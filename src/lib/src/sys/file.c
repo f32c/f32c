@@ -123,6 +123,7 @@ fd2fp(int fd)
 }
 
 
+#pragma weak open
 int
 open(const char *path, int flags, ...)
 {
@@ -150,6 +151,7 @@ open(const char *path, int flags, ...)
 }
 
 
+#pragma weak close
 int
 close(int fd)
 {
@@ -177,6 +179,7 @@ close(int fd)
 }
 
 
+#pragma weak read
 ssize_t
 read(int fd, void *buf, size_t nbytes)
 {
@@ -190,6 +193,7 @@ read(int fd, void *buf, size_t nbytes)
 }
 
 
+#pragma weak write
 ssize_t
 write(int fd, const void *buf, size_t nbytes)
 {
@@ -203,6 +207,7 @@ write(int fd, const void *buf, size_t nbytes)
 }
 
 
+#pragma weak poll
 int
 poll(struct pollfd fds[], nfds_t nfds, int timeout)
 {
@@ -245,6 +250,7 @@ again:
 }
 
 
+#pragma weak ioctl
 int
 ioctl(int fd, unsigned long cmd, ...)
 {
@@ -268,6 +274,7 @@ ioctl(int fd, unsigned long cmd, ...)
 	};
 }
 
+#pragma weak fcntl
 int
 fcntl(int fd, int cmd, ...)
 {

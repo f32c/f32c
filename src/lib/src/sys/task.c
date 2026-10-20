@@ -138,6 +138,7 @@ atexit(void (*function)(void))
 
 
 /* XXX exit() works only on CPU #0 - fixme! */
+#pragma weak exit
 _Noreturn void
 exit(int x __unused)
 {
