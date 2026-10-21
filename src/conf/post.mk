@@ -171,7 +171,11 @@ MK_LDFLAGS += -N ${ENDIANFLAGS}
 MK_LDFLAGS += --section-start=.init=${LOADADDR}
 MK_LDFLAGS += --library-path=${LIBDIR}
 ifndef WITHOUT_LIBS
-	MK_LDFLAGS += -lcrt0
+	ifdef SYSCALLS
+		MK_LDFLAGS += -lcrt0os
+	else
+		MK_LDFLAGS += -lcrt0
+	endif
 endif
 
 # Garbage-collect unused section (unreferenced functions)

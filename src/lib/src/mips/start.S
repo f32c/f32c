@@ -44,8 +44,13 @@ _start:
 	lui	zero, 0xf32c	/* Signature cookie */
 	la	s0, _start	/* Executable code base address */
 
+#ifdef CRT0OS
+	/* Declare __syscall_ptrs address */
+	la	s0, __syscall_ptrs
+#else
 	/* Set thread pointer */
 	la	k1, thread0
+#endif
 
 	/* BSS ssection bounds */
 	la	s0, __bss_start	/* Start of BSS section, NOT word aligned */

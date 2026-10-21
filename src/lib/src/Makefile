@@ -37,6 +37,12 @@ ifeq ($(MAKECMDGOALS),crt0rom)
  .DEFAULT_GOAL = lib
 endif
 
+ifeq ($(MAKECMDGOALS),crt0os)
+ LIB = crt0os
+ CFLAGS += -DCRT0OS
+ .DEFAULT_GOAL = lib
+endif
+
 ifeq ($(MAKECMDGOALS),c)
  LIB = c
  .DEFAULT_GOAL = lib
@@ -71,6 +77,10 @@ endif
 
 ifeq ($(LIB),crt0rom)
  ASFILES = ${ARCH}/start.S
+endif
+
+ifeq ($(LIB),crt0os)
+ ASFILES = ${ARCH}/start.S ${ARCH}/syscall_trampoline.S
 endif
 
 ifeq ($(LIB),c)
@@ -159,6 +169,8 @@ libs:
 	rm -fr ${OBJDIR}
 	${MAKE} crt0
 	rm -fr ${OBJDIR}
+	${MAKE} crt0os
+	rm -fr ${OBJDIR}
 	${MAKE} c
 	rm -fr ${OBJDIR}
 	${MAKE} cint
@@ -166,7 +178,6 @@ libs:
 	${MAKE} m
 	rm -fr ${OBJDIR}
 	${MAKE} ulx3s
-	rm -fr ${OBJDIR}
 
 clean: clean_lib_objs
 
