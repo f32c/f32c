@@ -23,9 +23,18 @@
  * SUCH DAMAGE.
  */
 
+#include <dirent.h>
 #include <fcntl.h>
+#include <poll.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 
+#include <sys/ioccom.h>
+#include <sys/stat.h>
+#include <sys/syscall.h>
+
+extern void *_gp;
 extern void *__memtop;
 extern void *__ramdisk;
 extern void _start(void);
@@ -34,6 +43,28 @@ typedef int _start_t(int, char *const [], char *const []);
 
 uint32_t __spawn_regstore[16];
 
+void *syscall_trampoline[32] = {
+	[0] = &_gp,
+	[SYS_exit] = exit,
+	[SYS_open] = open,
+	[SYS_close] = close,
+	[SYS_read] = read,
+	[SYS_write] = write,
+	[SYS_lseek] = lseek,
+	[SYS_fcntl] = fcntl,
+	[SYS_ioctl] = ioctl,
+	[SYS_poll] = poll,
+	[SYS_opendir] = opendir,
+	[SYS_readdir] = readdir,
+	[SYS_closedir] = closedir,
+	[SYS_unlink] = unlink,
+	[SYS_chdir] = chdir,
+	[SYS_getcwd] = getcwd,
+	[SYS_mkdir] = mkdir,
+	[SYS_rmdir] = rmdir,
+	[SYS_rename] = rename,
+	[SYS_stat] = stat,
+};
 
 pid_t
 waitpid(pid_t wpid, int *status, int options)
@@ -55,7 +86,7 @@ posix_spawn(int *cpid, const char *path, void *fa __unused, void *at __unused,
 #endif
 	void *childsp = &_start;
 	int i, fd, argc;
-	void *start, *bss, *end;
+	void *start, *bss, *end, **syscp;
 	char *cp;
 	_start_t *entry;
 
@@ -74,11 +105,12 @@ posix_spawn(int *cpid, const char *path, void *fa __unused, void *at __unused,
 #ifdef __mips__
 	if (longp[0] == 0x3c00f32c &&
 	    shortp[3] == 0x3c10 && shortp[5] == 0x2610 &&
-	    shortp[7] == 0x3c1b && shortp[9] == 0x277b &&
+	    shortp[7] == 0x3c10 && shortp[9] == 0x2610 &&
 	    shortp[11] == 0x3c10 && shortp[13] == 0x2610 &&
 	    shortp[15] == 0x3c11 && shortp[17] == 0x2631) {
 		/* Little-endian cookie found */
 		start = (void *) ((shortp[2] << 16) + shortp[4]);
+		syscp = (void *) ((shortp[6] << 16) + shortp[8]);
 		bss = (void *) ((shortp[10] << 16) + shortp[12]);
 		end = (void *) ((shortp[14] << 16) + shortp[16]);
 #else /* !__mips__ */
@@ -92,6 +124,7 @@ posix_spawn(int *cpid, const char *path, void *fa __unused, void *at __unused,
 	    hdrbuf[28] == 0xb7 && (hdrbuf[29] & 0xf) == 0x4 &&
 	    hdrbuf[32] == 0x93 && hdrbuf[33] == 0x84) {
 		start = (void *) ((longp[1] & 0xfffff000) + (longp[2] >> 20));
+		syscp = (void *) ((longp[3] & 0xfffff000) + (longp[4] >> 20));
 		bss = (void *) ((longp[5] & 0xfffff000) + (longp[6] >> 20));
 		end = (void *) ((longp[7] & 0xfffff000) + (longp[8] >> 20));
 #endif
@@ -122,6 +155,9 @@ posix_spawn(int *cpid, const char *path, void *fa __unused, void *at __unused,
 		errno = ENOEXEC;
 		return (-1);
 	}
+
+	/* Set __syscall_ptrs */
+	*syscp = syscall_trampoline;
 
 	/* Propagate memtop, __ramdisk to the executable */
 	longp = start;
