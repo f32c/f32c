@@ -47,6 +47,24 @@ typedef	void	cmdhandler_t(int, char **);
 extern FILE debf;
 #define dprintf(...) fprintf(&debf, __VA_ARGS__)
 
+struct cli_cmd_link {
+	const char	*name;
+	cmdhandler_t	*handler;
+};
+
+#define	CMD_LINK(n, h)		 					\
+__attribute((__section__("cmd_link"))) 					\
+const struct cli_cmd_link n ## __link = {				\
+	.name = #n,							\
+	.handler = h,							\
+}
+
+extern void *__start_cmd_link;
+extern void *__stop_cmd_link;
+
+struct cli_cmd_link *cmd_link_start = (void *) &__start_cmd_link;
+struct cli_cmd_link *cmd_link_end = (void *) &__stop_cmd_link;
+
 
 static void
 set_term()
@@ -537,6 +555,8 @@ ls_h(int argc, char **argv)
 		strcpy(buf, ".");
 	ls_walk(buf, flags);
 }
+CMD_LINK(ls, ls_h);
+CMD_LINK(dir, ls_h);
 
 
 static void
@@ -551,6 +571,7 @@ cd_h(int argc, char **argv)
 	getcwd(path, 128);
 	setenv("PWD", path, 1);
 }
+CMD_LINK(cd, cd_h);
 
 
 static void
@@ -561,6 +582,7 @@ pwd_h(int argc __unused, char **argv)
 	getcwd(path, 128);
 	printf("%s\n", path);
 }
+CMD_LINK(pwd, pwd_h);
 
 
 static void
@@ -574,6 +596,8 @@ rm_h(int argc, char **argv)
 			return;
 		}
 }
+CMD_LINK(rm, rm_h);
+CMD_LINK(del, rm_h);
 
 
 static void
@@ -587,6 +611,8 @@ rmdir_h(int argc, char **argv)
 			return;
 		}
 }
+CMD_LINK(rmdir, rmdir_h);
+
 
 static void
 mkdir_h(int argc, char **argv)
@@ -599,6 +625,7 @@ mkdir_h(int argc, char **argv)
 			return;
 		}
 }
+CMD_LINK(mkdir, mkdir_h);
 
 
 #ifdef F32C
@@ -633,6 +660,7 @@ mkfs_h(int argc, char **argv)
 	if (res != FR_OK)
 		printf("Error: %d\n", res);
 }
+CMD_LINK(mkfs, mkfs_h);
 #endif
 
 
@@ -651,6 +679,8 @@ rename_h(int argc, char **argv)
 	fprintf(stderr, "%s %s to %s: ", argv[0], argv[1], argv[2]);
 	perror(NULL);
 }
+CMD_LINK(rename, rename_h);
+CMD_LINK(mv, rename_h);
 
 
 static void
@@ -731,6 +761,8 @@ cp_h(int argc, char **argv)
 	printf("Copied %d bytes in %.3f s (%.3f KB/s)\n", tot,
 	    0.000000001 * tns, tot / (tns * 0.000001));
 }
+CMD_LINK(copy, cp_h);
+CMD_LINK(cp, cp_h);
 
 
 static void
@@ -805,6 +837,7 @@ cmp_h(int argc, char **argv)
 	free(abuf);
 	free(bbuf);
 }
+CMD_LINK(cmp, cmp_h);
 
 
 #define	CREAT_MAXLINCHAR 256
@@ -873,6 +906,7 @@ create_h(int argc, char **argv)
 	free(buf);
 	close(fd);
 }
+CMD_LINK(create, create_h);
 
 
 static void
@@ -944,6 +978,8 @@ stopped:
 	} while (got > 0);
 	close(fd);
 }
+CMD_LINK(cat, more_h);
+CMD_LINK(more, more_h);
 
 
 static int
@@ -1022,6 +1058,8 @@ hexdump_h(int argc, char **argv)
 	} while (got > 0 && res == 0);
 	close(fd);
 }
+CMD_LINK(hd, hexdump_h);
+CMD_LINK(hexdump, hexdump_h);
 
 
 static void
@@ -1071,6 +1109,7 @@ chargen_h(int argc, char **argv)
 	printf("bytes in %.3f s (%.3f KBytes/s)\n", 0.000000001 * tns,
 	    i / (0.000000001 * tns));
 }
+CMD_LINK(chargen, chargen_h);
 
 
 static void
@@ -1084,6 +1123,8 @@ history_h(int argc __unused, char **argv __unused)
 	for (; i < curhist; i++)
 		printf("%5d  %s\n", i + 1, histbuf[i % MAXHIST]);
 }
+CMD_LINK(hi, history_h);
+CMD_LINK(history, history_h);
 
 
 static void
@@ -1092,6 +1133,8 @@ cls_h(int argc __unused, char **argv __unused)
 
 	printf("\n\033[2J\033[H");
 }
+CMD_LINK(clear, cls_h);
+CMD_LINK(cls, cls_h);
 
 
 static void
@@ -1116,6 +1159,7 @@ date_h(int argc, char **argv)
 	gmtime_r(&tim, &tm);
 	printf("%s", asctime(&tm));
 }
+CMD_LINK(date, date_h);
 
 
 static void
@@ -1137,6 +1181,7 @@ exec_h(int argc, char **argv)
 	if (execve(path, argv, environ) < 0)
 		perror("execve() failed");
 }
+CMD_LINK(exec, exec_h);
 
 
 static void
@@ -1145,6 +1190,8 @@ exit_h(int argc __unused, char **argv __unused)
 
 	do_exit = 1;
 }
+CMD_LINK(quit, exit_h);
+CMD_LINK(exit, exit_h);
 
 
 #define SREC_BUFSIZ	(1024 * 1024)
@@ -1295,6 +1342,7 @@ setenv_h(int argc, char **argv)
 
 	setenv(argv[1], val, 1);
 }
+CMD_LINK(setenv, setenv_h);
 
 
 static void
@@ -1316,6 +1364,7 @@ srec_h(int argc, char **argv)
 		printf("Invalid arguments\n");
 	}
 }
+CMD_LINK(srec, srec_h);
 
 
 static void
@@ -1337,6 +1386,7 @@ system_h(int argc, char **argv)
 	}
 	waitpid(childpid, &status, 0);
 }
+CMD_LINK(system, system_h);
 
 
 static void
@@ -1370,6 +1420,7 @@ df_h(int argc __unused, char **argv __unused)
 		    buf[i].f_mntonname);
 	free(buf);
 }
+CMD_LINK(df, df_h);
 
 
 #ifdef F32C
@@ -1386,6 +1437,7 @@ baud_h(int argc, char **argv)
 		printf("Invalid baud rate: ");
 	printf("%s\n", argv[1]);
 }
+CMD_LINK(baud, baud_h);
 
 
 static void
@@ -1545,70 +1597,19 @@ flash_h(int argc, char **argv)
 buf_cleanup:
 	free(buf);
 }
+CMD_LINK(flash, flash_h);
 #endif
-
-
-static cmdhandler_t help_h;
-
-#define	CMDSW_ENTRY(t, h) { .tok = t, .handler = h}
-
-const struct cmdswitch {
-	const char	*tok;
-	cmdhandler_t	*handler;
-} cmdswitch[] = {
-#ifdef F32C
-	CMDSW_ENTRY("baud",	baud_h),
-#endif
-	CMDSW_ENTRY("cat",	more_h),
-	CMDSW_ENTRY("cd",	cd_h),
-	CMDSW_ENTRY("chargen",	chargen_h),
-	CMDSW_ENTRY("clear",	cls_h),
-	CMDSW_ENTRY("cls",	cls_h),
-	CMDSW_ENTRY("cmp",	cmp_h),
-	CMDSW_ENTRY("copy",	cp_h),
-	CMDSW_ENTRY("cp",	cp_h),
-	CMDSW_ENTRY("create",	create_h),
-	CMDSW_ENTRY("date",	date_h),
-	CMDSW_ENTRY("del",	rm_h),
-	CMDSW_ENTRY("df",	df_h),
-	CMDSW_ENTRY("dir",	ls_h),
-	CMDSW_ENTRY("exec",	exec_h),
-	CMDSW_ENTRY("exit",	exit_h),
-#ifdef F32C
-	CMDSW_ENTRY("flash",	flash_h),
-#endif
-	CMDSW_ENTRY("hd",	hexdump_h),
-	CMDSW_ENTRY("help",	help_h),
-	CMDSW_ENTRY("hexdump",	hexdump_h),
-	CMDSW_ENTRY("hi",	history_h),
-	CMDSW_ENTRY("history",	history_h),
-	CMDSW_ENTRY("ls",	ls_h),
-	CMDSW_ENTRY("mkdir",	mkdir_h),
-#ifdef F32C
-	CMDSW_ENTRY("mkfs",	mkfs_h),
-#endif
-	CMDSW_ENTRY("more",	more_h),
-	CMDSW_ENTRY("mv",	rename_h),
-	CMDSW_ENTRY("pwd",	pwd_h),
-	CMDSW_ENTRY("quit",	exit_h),
-	CMDSW_ENTRY("rename",	rename_h),
-	CMDSW_ENTRY("rm",	rm_h),
-	CMDSW_ENTRY("rmdir",	rmdir_h),
-	CMDSW_ENTRY("setenv",	setenv_h),
-	CMDSW_ENTRY("srec",	srec_h),
-	CMDSW_ENTRY("system",	system_h),
-	CMDSW_ENTRY("?",	help_h),
-	{ 0, 0 }
-};
 
 
 static void
 help_h(int argc __unused, char **argv __unused)
 {
 	int i, j;
+	struct cli_cmd_link *clp;
 	const char *tp;
 
-	for (i = 0; (tp = cmdswitch[i].tok) != NULL; i++) {
+	for (i = 0, clp = cmd_link_start; clp != cmd_link_end; clp++, i++) {
+		tp = clp->name;
 		printf("%s ", tp);
 		for (j = strlen(tp); j < 10; j++)
 			printf(" ");
@@ -1618,6 +1619,7 @@ help_h(int argc __unused, char **argv __unused)
 	if (i % 6)
 		printf("\n");
 }
+CMD_LINK(help, help_h);
 
 
 void
@@ -1637,6 +1639,7 @@ cli(void)
 	int i, ll, argc = 0;
 	char *argv[MAXARGS];
 	char *lcp;
+	struct cli_cmd_link *clp;
 
 	set_term();
 
@@ -1721,18 +1724,18 @@ retok:
 			}
 		}
 
-		for (i = 0; cmdswitch[i].tok != NULL; i++)
-			if (strcmp(cmdswitch[i].tok, argv[0]) == 0)
+		for (clp = cmd_link_start; clp != cmd_link_end; clp++)
+			if (strcmp(clp->name, argv[0]) == 0)
 				break;
-		if (cmdswitch[i].tok == NULL) {
+		if (clp == cmd_link_end) {
 			printf("Unknown command\n");
 			continue;
 		}
 
-		if (cmdswitch[i].handler == exit_h)
-			cmdswitch[i].handler(argc, argv);
+		if (clp->handler == exit_h)
+			clp->handler(argc, argv);
 		else {
-			i = task_create(cmdswitch[i].handler, argc, argv);
+			i = task_create(clp->handler, argc, argv);
 		}
 	} while (!do_exit);
 }
