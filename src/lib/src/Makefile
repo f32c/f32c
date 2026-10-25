@@ -92,7 +92,7 @@ ifeq ($(LIB),c)
 
  CFILES += gen/div.c gen/div64.c gen/mul.c \
 	gen/assert.c gen/isatty.c gen/termios.c \
-	gen/getprogname.c gen/setprogname.c
+	gen/getprogname.c gen/setprogname.c gen/sleep.c gen/usleep.c
 
  CFILES += dev/sio.c dev/spi.c
 
