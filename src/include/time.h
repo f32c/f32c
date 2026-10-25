@@ -44,6 +44,7 @@
 #include <sys/cdefs.h>
 #include <sys/_null.h>
 #include <sys/_types.h>
+#include <sys/_clock_id.h>
 
 /* Frequency of clock ticks reported by clock().  */
 #define	CLOCKS_PER_SEC	1000000
@@ -79,12 +80,6 @@ typedef	__timer_t	timer_t;
 
 #include <sys/timespec.h>
 #endif /* __POSIX_VISIBLE >= 199309 */
-
-/* These macros are also in sys/time.h. */
-#if !defined(CLOCK_REALTIME) && __POSIX_VISIBLE >= 200112
-#define CLOCK_REALTIME	0
-#define CLOCK_MONOTONIC	1
-#endif /* !defined(CLOCK_REALTIME) && __POSIX_VISIBLE >= 200112 */
 
 #if !defined(TIMER_ABSTIME) && __POSIX_VISIBLE >= 200112
 #if __BSD_VISIBLE
