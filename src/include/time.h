@@ -1,4 +1,6 @@
-/*
+/*-
+ * SPDX-License-Identifier: BSD-3-Clause
+ *
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
  * (c) UNIX System Laboratories, Inc.
@@ -35,7 +37,6 @@
  */
 
 /*
- * $FreeBSD: stable/9/include/time.h 235785 2012-05-22 14:40:39Z theraven $
  */
 
 #ifndef _TIME_H_
@@ -46,7 +47,15 @@
 #include <sys/_types.h>
 #include <sys/_clock_id.h>
 
-/* Frequency of clock ticks reported by clock().  */
+#if __POSIX_VISIBLE > 0 && __POSIX_VISIBLE < 200112 || __BSD_VISIBLE
+/*
+ * Frequency of the clock ticks reported by times().  Deprecated - use
+ * sysconf(_SC_CLK_TCK) instead.  (Removed in 1003.1-2001.)
+ */
+#define	CLK_TCK		128
+#endif
+
+/* Frequency of the clock ticks reported by clock().  */
 #define	CLOCKS_PER_SEC	1000000
 
 #ifndef _CLOCK_T_DECLARED
@@ -81,12 +90,12 @@ typedef	__timer_t	timer_t;
 #include <sys/timespec.h>
 #endif /* __POSIX_VISIBLE >= 199309 */
 
-#if !defined(TIMER_ABSTIME) && __POSIX_VISIBLE >= 200112
-#if __BSD_VISIBLE
-#define TIMER_RELTIME	0x0	/* relative timer */
+#if __POSIX_VISIBLE >= 200112
+#ifndef _PID_T_DECLARED
+typedef	__pid_t		pid_t;
+#define	_PID_T_DECLARED
 #endif
-#define TIMER_ABSTIME	0x1	/* absolute timer */
-#endif /* !defined(TIMER_ABSTIME) && __POSIX_VISIBLE >= 200112 */
+#endif
 
 struct tm {
 	int	tm_sec;		/* seconds after the minute [0-60] */
@@ -110,7 +119,9 @@ __BEGIN_DECLS
 char *asctime(const struct tm *);
 clock_t clock(void);
 char *ctime(const time_t *);
+#ifndef _STANDALONE
 double difftime(time_t, time_t);
+#endif
 /* XXX missing: getdate() */
 struct tm *gmtime(const time_t *);
 struct tm *localtime(const time_t *);
@@ -135,13 +146,19 @@ void tzset(void);
 int clock_getres(clockid_t, struct timespec *);
 int clock_gettime(clockid_t, struct timespec *);
 int clock_settime(clockid_t, const struct timespec *);
-/* XXX missing: clock_nanosleep() */
 int nanosleep(const struct timespec *, struct timespec *);
 #endif /* __POSIX_VISIBLE >= 199309 */
+
+#if __POSIX_VISIBLE >= 200112
+int clock_getcpuclockid(pid_t, clockid_t *);
+int clock_nanosleep(clockid_t, int, const struct timespec *, struct timespec *);
+#endif
 
 #if __POSIX_VISIBLE >= 199506
 char *asctime_r(const struct tm *, char *);
 char *ctime_r(const time_t *, char *);
+#endif
+#if __POSIX_VISIBLE >= 199506 || __ISO_C_VISIBLE >= 2023
 struct tm *gmtime_r(const time_t *, struct tm *);
 struct tm *localtime_r(const time_t *, struct tm *);
 #endif
@@ -153,14 +170,29 @@ char *strptime(const char * __restrict, const char * __restrict,
 
 #if __BSD_VISIBLE
 char *timezone(int, int);	/* XXX XSI conflict */
-void tzsetwall(void);
 time_t timelocal(struct tm * const);
 time_t timegm(struct tm * const);
+int timer_oshandle_np(timer_t timerid);
+time_t time2posix(time_t t);
+time_t posix2time(time_t t);
+struct tm *offtime(const time_t *, long);
+struct tm *offtime_r(const time_t *__restrict, long, struct tm *__restrict);
 #endif /* __BSD_VISIBLE */
 
-#if __POSIX_VISIBLE >= 200809 || defined(_XLOCALE_H_)
-//#include <xlocale/_time.h>
+#if __BSD_VISIBLE || __ISO_C_VISIBLE >= 2011 || \
+    (defined(__cplusplus) && __cplusplus >= 201703)
+#include <sys/_timespec.h>
+/* ISO/IEC 9899:2011 7.27.2.5 The timespec_get function */
+#define TIME_UTC	1	/* time elapsed since epoch */
+int timespec_get(struct timespec *ts, int base);
+#if __BSD_VISIBLE || __ISO_C_VISIBLE >= 2023
+/* ISO/IEC 9899:2024 7.29.1 Components of time */
+#define TIME_MONOTONIC	2	/* monotonic time */
+/* ISO/IEC 9899:2024 7.29.2.7 The timespec_getres function */
+int timespec_getres(struct timespec *, int);
 #endif
+#endif
+
 __END_DECLS
 
 /* f32c-specific */
