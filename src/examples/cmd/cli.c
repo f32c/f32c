@@ -55,15 +55,30 @@ struct cli_cmd_link *cmd_link_end = (void *) &__stop_cmd_link;
 
 
 static void
-set_term()
+sig_h(int sig __unused)
+{
+
+	interrupt = 1;
+}
+
+
+static void
+set_term(void)
 {
 	struct termios nterm;
 
+	signal(SIGHUP, sig_h);
+	signal(SIGINT, sig_h);
+	siginterrupt(SIGINT, 1);
+
 	tcgetattr(0, &nterm);
 
-	nterm.c_lflag &= ~(ECHO|ECHOK|ECHONL|ICANON);
-	nterm.c_iflag &= ~(IGNCR|INLCR);
-	nterm.c_iflag |= (ICRNL|ISTRIP);
+	nterm.c_iflag &= ~(IGNCR | INLCR);
+	nterm.c_iflag |= (ICRNL | ISTRIP | IXON);
+	nterm.c_oflag |= (OPOST | ONLCR);
+	nterm.c_cflag = 0;
+	nterm.c_lflag &= ~(ECHO | ECHOK | ECHONL | ICANON);
+	nterm.c_lflag |= ISIG;
 
 	tcsetattr(0, TCSADRAIN, &nterm);
 }
@@ -1373,6 +1388,9 @@ system_h(int argc, char **argv)
 		return;
 	}
 	waitpid(childpid, &status, 0);
+
+	/* Reset tty and signal handlers */
+	set_term();
 }
 CMD_LINK(system, system_h);
 
@@ -1611,15 +1629,6 @@ CMD_LINK(help, help_h);
 
 
 void
-sig_h(int sig __unused)
-{
-
-	//printf("%s() %d: signal %d\n", __FUNCTION__, __LINE__, sig);
-	interrupt = 1;
-}
-
-
-void
 cli(void)
 {
 	char line[128];
@@ -1630,10 +1639,6 @@ cli(void)
 	struct cli_cmd_link *clp;
 
 	set_term();
-
-	signal(SIGHUP, sig_h);
-	signal(SIGINT, sig_h);
-	siginterrupt(SIGINT, 1);
 
 	getcwd(line, 128);
 	setenv("PWD", line, 1);
