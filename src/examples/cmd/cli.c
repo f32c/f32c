@@ -30,6 +30,8 @@
 #include <fatfs/diskio.h>
 #endif
 
+#include "cmd_link.h"
+
 #define MAXARGS	16
 #define	MAXHIST 32
 
@@ -42,22 +44,8 @@ static int do_exit;
 
 extern char **environ;
 
-typedef	void	cmdhandler_t(int, char **);
-
 extern FILE debf;
 #define dprintf(...) fprintf(&debf, __VA_ARGS__)
-
-struct cli_cmd_link {
-	const char	*name;
-	cmdhandler_t	*handler;
-};
-
-#define	CMD_LINK(n, h)		 					\
-__attribute((__section__("cmd_link"))) 					\
-const struct cli_cmd_link n ## __link = {				\
-	.name = #n,							\
-	.handler = h,							\
-}
 
 extern void *__start_cmd_link;
 extern void *__stop_cmd_link;
