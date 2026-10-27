@@ -48,6 +48,7 @@ get_cpu_freq() {
 }
 
 
+#pragma weak clock_getres
 int
 clock_getres(clockid_t clk_id, struct timespec *res) {
 	uint32_t rtc_cfg;
@@ -79,6 +80,7 @@ clock() {
 }
 
 
+#pragma weak clock_gettime
 int
 clock_gettime(clockid_t clk_id, struct timespec *tp) {
 	uint32_t sec, sec2, nsec;
@@ -108,6 +110,7 @@ clock_gettime(clockid_t clk_id, struct timespec *tp) {
 }
 
 
+#pragma weak clock_settime
 int
 clock_settime(clockid_t clk_id, const struct timespec *tp) {
 	uint32_t sec;

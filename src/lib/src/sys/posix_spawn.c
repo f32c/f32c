@@ -43,14 +43,15 @@ typedef int _start_t(int, char *const [], char *const []);
 
 uint32_t __spawn_regstore[16];
 
-void *syscall_trampoline[32] = {
-	[0] = &_gp,
+void *syscall_trampoline[SYS__last + 1] = {
+	[SYS__gp_reserved] = &_gp,
 	[SYS_exit] = exit,
 	[SYS_open] = open,
 	[SYS_close] = close,
 	[SYS_read] = read,
 	[SYS_write] = write,
 	[SYS_lseek] = lseek,
+	[SYS_truncate] = truncate,
 	[SYS_fcntl] = fcntl,
 	[SYS_ioctl] = ioctl,
 	[SYS_poll] = poll,
@@ -64,6 +65,10 @@ void *syscall_trampoline[32] = {
 	[SYS_rmdir] = rmdir,
 	[SYS_rename] = rename,
 	[SYS_stat] = stat,
+	[SYS_clock_getres] = clock_getres,
+	[SYS_clock_gettime] = clock_gettime,
+	[SYS_clock_settime] = clock_settime,
+	[SYS_nanosleep] = nanosleep,
 };
 
 pid_t

@@ -1,6 +1,7 @@
 
 #include <sys/time.h>
 
+#pragma weak nanosleep
 int
 nanosleep(const struct timespec *rqtp, struct timespec *rmtp)
 {

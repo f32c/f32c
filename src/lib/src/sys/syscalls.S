@@ -1,15 +1,15 @@
 
 	SYSCALL	exit SYS_exit
-	SYSCALL	read SYS_read
-	SYSCALL	write SYS_write
 	SYSCALL	open SYS_open
 	SYSCALL	close SYS_close
+	SYSCALL	read SYS_read
+	SYSCALL	write SYS_write
 	SYSCALL	lseek SYS_lseek
+	SYSCALL	truncate SYS_truncate
 	SYSCALL	fcntl SYS_fcntl
 	SYSCALL	ioctl SYS_ioctl
 	SYSCALL	poll SYS_poll
 	SYSCALL	select SYS_select
-	SYSCALL	truncate SYS_truncate
 	SYSCALL	opendir SYS_opendir
 	SYSCALL	readdir SYS_readdir
 	SYSCALL	closedir SYS_closedir
@@ -28,3 +28,12 @@
 	SYSCALL listen SYS_listen
 	SYSCALL accept SYS_accept
 	SYSCALL connect SYS_connect
+	SYSCALL setsockopt SYS_setsockopt
+	SYSCALL send SYS_send
+	SYSCALL recv SYS_recv
+	SYSCALL clock_getres SYS_clock_getres
+	SYSCALL clock_gettime SYS_clock_gettime
+	SYSCALL clock_setttime SYS_clock_settime
+	SYSCALL nanosleep SYS_nanosleep
+	SYSCALL sched_yield SYS_sched_yield
+
