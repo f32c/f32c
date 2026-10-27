@@ -51,7 +51,6 @@ void *syscall_trampoline[SYS__last + 1] = {
 	[SYS_read] = read,
 	[SYS_write] = write,
 	[SYS_lseek] = lseek,
-	[SYS_truncate] = truncate,
 	[SYS_fcntl] = fcntl,
 	[SYS_ioctl] = ioctl,
 	[SYS_poll] = poll,
