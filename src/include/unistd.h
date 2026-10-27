@@ -1,4 +1,6 @@
 /*-
+ * SPDX-License-Identifier: BSD-3-Clause
+ *
  * Copyright (c) 1991, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -27,7 +29,6 @@
  * SUCH DAMAGE.
  *
  *	@(#)unistd.h	8.12 (Berkeley) 4/27/95
- * $FreeBSD: stable/9/include/unistd.h 235539 2012-05-17 10:25:34Z dim $
  */
 
 #ifndef _UNISTD_H_
@@ -101,6 +102,7 @@ typedef	__useconds_t	useconds_t;
  * returns -1, the functions may be stubbed out.
  */
 #define	_POSIX_BARRIERS			200112L
+#define	_POSIX_CPUTIME			200112L
 #define	_POSIX_READER_WRITER_LOCKS	200112L
 #define	_POSIX_REGEXP			1
 #define	_POSIX_SHELL			1
@@ -112,7 +114,7 @@ typedef	__useconds_t	useconds_t;
 #define	_POSIX_THREAD_PRIO_INHERIT	200112L
 #define	_POSIX_THREAD_PRIO_PROTECT	200112L
 #define	_POSIX_THREAD_PRIORITY_SCHEDULING 200112L
-#define	_POSIX_THREAD_PROCESS_SHARED	-1
+#define	_POSIX_THREAD_PROCESS_SHARED	200112L
 #define	_POSIX_THREAD_SAFE_FUNCTIONS	-1
 #define	_POSIX_THREAD_SPORADIC_SERVER	-1
 #define	_POSIX_THREADS			200112L
@@ -327,9 +329,9 @@ int	 close(int);
 void	 closefrom(int);
 int	 dup(int);
 int	 dup2(int, int);
-int	 execl(const char *, const char *, ...);
+int	 execl(const char *, const char *, ...) __null_sentinel;
 int	 execle(const char *, const char *, ...);
-int	 execlp(const char *, const char *, ...);
+int	 execlp(const char *, const char *, ...) __null_sentinel;
 int	 execv(const char *, char * const *);
 int	 execve(const char *, char * const *, char * const *);
 int	 execvp(const char *, char * const *);
@@ -384,6 +386,7 @@ extern int optind, opterr, optopt;
 /* ISO/IEC 9945-1: 1996 */
 #if __POSIX_VISIBLE >= 199506 || __XSI_VISIBLE
 int	 fsync(int);
+int	 fdatasync(int);
 
 /*
  * ftruncate() was in the POSIX Realtime Extension (it's used for shared
@@ -396,7 +399,7 @@ int	 ftruncate(int, off_t);
 #endif
 
 #if __POSIX_VISIBLE >= 199506
-int	 getlogin_r(char *, int);
+int	 getlogin_r(char *, size_t);
 #endif
 
 /* 1003.1-2001 */
@@ -426,7 +429,7 @@ int	 truncate(const char *, off_t);
 #endif
 #endif /* __POSIX_VISIBLE >= 200809 || __XSI_VISIBLE */
 
-#if __POSIX_VISIBLE >= 200809 || __BSD_VISIBLE
+#if __POSIX_VISIBLE >= 200809
 int	faccessat(int, const char *, int, int);
 int	fchownat(int, const char *, uid_t, gid_t, int);
 int	fexecve(int, char *const [], char *const []);
@@ -434,26 +437,23 @@ int	linkat(int, const char *, int, const char *, int);
 ssize_t	readlinkat(int, const char * __restrict, char * __restrict, size_t);
 int	symlinkat(const char *, int, const char *);
 int	unlinkat(int, const char *, int);
-#endif /* __POSIX_VISIBLE >= 200809 || __BSD_VISIBLE */
+#endif /* __POSIX_VISIBLE >= 200809 */
 
 /*
  * symlink() was originally in POSIX.1a, which was withdrawn after
  * being overtaken by events (1003.1-2001).  It was in XPG4.2, and of
  * course has been in BSD since 4.2.
  */
-#if __POSIX_VISIBLE >= 200112 || __XSI_VISIBLE >= 402 || __BSD_VISIBLE
+#if __POSIX_VISIBLE >= 200112 || __XSI_VISIBLE >= 402
 int	 symlink(const char * __restrict, const char * __restrict);
 #endif
 
 /* X/Open System Interfaces */
 #if __XSI_VISIBLE
 char	*crypt(const char *, const char *);
-/* char	*ctermid(char *); */		/* XXX ??? */
-int	 encrypt(char *, int);
 long	 gethostid(void);
 int	 lockf(int, int, off_t);
 int	 nice(int);
-int	 setpgrp(pid_t _pid, pid_t _pgrp); /* obsoleted by setpgid() */
 int	 setregid(gid_t, gid_t);
 int	 setreuid(uid_t, uid_t);
 
@@ -485,21 +485,31 @@ pid_t	 vfork(void) __returns_twice;
 
 #if __BSD_VISIBLE
 struct timeval;				/* select(2) */
+
+struct crypt_data {
+	int	initialized;	/* For compatibility with glibc. */
+	char	__buf[256];	/* Buffer returned by crypt_r(). */
+};
+
 int	 acct(const char *);
 int	 async_daemon(void);
 int	 check_utility_compat(const char *);
+int	 close_range(unsigned int, unsigned int, int);
+ssize_t	 copy_file_range(int, off_t *, int, off_t *, size_t, unsigned int);
 const char *
 	 crypt_get_format(void);
+char	*crypt_r(const char *, const char *, struct crypt_data *);
 int	 crypt_set_format(const char *);
-int	 des_cipher(const char *, char *, long, int);
-int	 des_setkey(const char *key);
+int	 dup3(int, int, int);
 int	 eaccess(const char *, int);
 void	 endusershell(void);
 int	 exect(const char *, char * const *, char * const *);
 int	 execvP(const char *, const char *, char * const *);
+int	 execvpe(const char *, char * const *, char * const *);
 int	 feature_present(const char *);
 char	*fflagstostr(u_long);
 int	 getdomainname(char *, int);
+int	 getentropy(void *, size_t);
 int	 getgrouplist(const char *, gid_t, gid_t *, int *);
 int	 getloginclass(char *, size_t);
 mode_t	 getmode(const void *, mode_t);
@@ -513,6 +523,7 @@ int	 iruserok(unsigned long, int, const char *, const char *);
 int	 iruserok_sa(const void *, int, int, const char *, const char *);
 int	 issetugid(void);
 void	__FreeBSD_libc_enter_restricted_mode(void);
+int	 kcmp(pid_t pid1, pid_t pid2, int type, uintptr_t idx1, uintptr_t idx2);
 long	 lpathconf(const char *, int);
 #ifndef _MKDTEMP_DECLARED
 char	*mkdtemp(char *);
@@ -533,6 +544,7 @@ char	*mktemp(char *);
 #endif
 int	 nfssvc(int, void *);
 int	 nlm_syscall(int, int, int, char **);
+int	 pipe2(int *, int);
 int	 profil(char *, size_t, vm_offset_t, int);
 int	 rcmd(char **, int, const char *, const char *, const char *, int *);
 int	 rcmd_af(char **, int, const char *,
@@ -543,29 +555,25 @@ char	*re_comp(const char *);
 int	 re_exec(const char *);
 int	 reboot(int);
 int	 revoke(const char *);
-pid_t	 rfork(int);
+pid_t	 rfork(int) __returns_twice;
 pid_t	 rfork_thread(int, void *, int (*)(void *), void *);
 int	 rresvport(int *);
 int	 rresvport_af(int *, int);
 int	 ruserok(const char *, int, const char *, const char *);
-#if __BSD_VISIBLE
 #ifndef _SELECT_DECLARED
 #define	_SELECT_DECLARED
 int	 select(int, fd_set *, fd_set *, fd_set *, struct timeval *);
-#endif
 #endif
 int	 setdomainname(const char *, int);
 int	 setgroups(int, const gid_t *);
 void	 sethostid(long);
 int	 sethostname(const char *, int);
-#ifndef _SETKEY_DECLARED
-int	 setkey(const char *);
-#define	_SETKEY_DECLARED
-#endif
 int	 setlogin(const char *);
 int	 setloginclass(const char *);
 void	*setmode(const char *);
+int	 setpgrp(pid_t, pid_t);			/* obsoleted by setpgid() */
 void	 setproctitle(const char *_fmt, ...) __printf0like(1, 2);
+void	 setproctitle_fast(const char *_fmt, ...) __printf0like(1, 2);
 int	 setresgid(gid_t, gid_t, gid_t);
 int	 setresuid(uid_t, uid_t, uid_t);
 int	 setrgid(gid_t);
@@ -573,12 +581,14 @@ int	 setruid(uid_t);
 void	 setusershell(void);
 int	 strtofflags(char **, u_long *, u_long *);
 int	 swapon(const char *);
-int	 swapoff(const char *);
+int	 swapoff(const char *, u_int);
 int	 syscall(int, ...);
 off_t	 __syscall(quad_t, ...);
 int	 undelete(const char *);
 int	 unwhiteout(const char *);
 void	*valloc(size_t);			/* obsoleted by malloc() */
+int	 funlinkat(int, const char *, int, int);
+pid_t	 _Fork(void);
 
 #ifndef _OPTRESET_DECLARED
 #define	_OPTRESET_DECLARED
@@ -586,18 +596,5 @@ extern int optreset;			/* getopt(3) external variable */
 #endif
 #endif /* __BSD_VISIBLE */
 __END_DECLS
-
-#ifndef SEEK_SET
-#define	SEEK_SET	0	/* set file offset to offset */
-#define	SEEK_CUR	1	/* set file offset to current plus offset */
-#define	SEEK_END	2	/* set file offset to EOF plus offset */
-#endif
-
-#ifndef _POSIX_SOURCE
-/* whence values for lseek(2); renamed by POSIX 1003.1 */
-#define	L_SET		SEEK_SET
-#define	L_INCR		SEEK_CUR
-#define	L_XTND		SEEK_END
-#endif
 
 #endif /* !_UNISTD_H_ */
