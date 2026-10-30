@@ -3,15 +3,16 @@
  */
 
 #include <stdio.h>
-#include <string.h>
+#include <unistd.h>
+
 #include <dev/io.h>
 
 #ifdef __mips__
-static const char *arch = "mips";
+#define	ARCH	"mips"
 #elif defined(__riscv)
-static const char *arch = "riscv";
+#define	ARCH	"riscv"
 #else
-static const char *arch = "unknown";
+#define	ARCH	"unknown"
 #endif
 
 #define	BTN_ANY	(BTN_CENTER | BTN_UP | BTN_DOWN | BTN_LEFT | BTN_RIGHT)
@@ -22,11 +23,10 @@ main(void)
 {
 	int in, out = 0;
 
-	printf("Hello, f32c/%s world!\n", arch);
-
 	do {
-		OUTB(IO_LED, out >> 20);
-		out++;
+		OUTB(IO_LED, out++);
+		printf("Hello, f32c/%s world! iter %d\n", ARCH, out);
+		sleep(1);
 		INB(in, IO_PUSHBTN);
 	} while ((in & BTN_ANY) == 0);
 }
