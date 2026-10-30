@@ -30,9 +30,11 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+#include <sys/file.h>
 #include <sys/ioccom.h>
 #include <sys/stat.h>
 #include <sys/syscall.h>
+#include <sys/task.h>
 
 extern void *_gp;
 extern void *__memtop;
@@ -88,11 +90,14 @@ posix_spawn(int *cpid, const char *path, void *fa __unused, void *at __unused,
 #ifdef __mips__
 	int16_t *shortp = (void *) hdrbuf;
 #endif
-	void *childsp = &_start;
+	void *childsp;
 	int i, fd, argc;
 	void *start, *bss, *end, **syscp;
 	char *cp;
 	_start_t *entry;
+	struct task *tsp;
+	struct thread *tdp;
+	int stacksiz = 32 * 1024;
 
 	for (argc = 0; argv[argc] != NULL; argc++) {}
 
@@ -160,6 +165,16 @@ posix_spawn(int *cpid, const char *path, void *fa __unused, void *at __unused,
 		return (-1);
 	}
 
+	/* Allocate task, thread, reference open files */
+	tsp = task_alloc(stacksiz);
+	if (tsp == NULL) {
+		task_free(tsp);
+		errno = ENOMEM;
+		return (-1);
+	}
+	tdp = TAILQ_FIRST(&tsp->ts_tds);
+	childsp = &tdp->td_stackb[stacksiz];
+
 	/* Set __syscall_ptrs */
 	*syscp = syscall_trampoline;
 
@@ -168,7 +183,8 @@ posix_spawn(int *cpid, const char *path, void *fa __unused, void *at __unused,
 	longp[0] = 0xf32cf00d;
 	longp[1] = (uint32_t) childsp; /* to become __memtop in child */
 	longp[2] = (uint32_t) __ramdisk;
-	entry = (void *) &longp[3];
+	/* longp[3], longp[4] (syscp) may find some use later */
+	entry = (void *) &longp[5];
 
         /* Invalidate I-cache */
 #ifdef __mips__
@@ -205,9 +221,9 @@ posix_spawn(int *cpid, const char *path, void *fa __unused, void *at __unused,
 		"move $4, %0;"			/* a0 = argc */
 		"move $5, %1;"			/* a1 = argv */
 		"move $6, %2;"			/* a2 = envp */
-		"move $2, %3;"			/* v0 = entry */
+		"move $12, %3;"			/* t0 = entry */
 		"move $29, %4;"			/* sp = childsp */
-		"jalr $2;"
+		"jalr $12;"
 		/* Restore caller-preserved registers from a dedicated block */
 		"lui $12, %%hi(__spawn_regstore);" /* t0, hi */
 		"addiu $12, $12, %%lo(__spawn_regstore);" /* t0, lo */
@@ -272,6 +288,7 @@ posix_spawn(int *cpid, const char *path, void *fa __unused, void *at __unused,
 #endif
                 :
                 : "r" (argc), "r" (argv), "r" (envp), "r" (entry), "r" (childsp)
+		: "a0", "a1", "a2", "t0"
         );
 
 	return(0);

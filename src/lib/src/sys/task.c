@@ -58,6 +58,7 @@ void
 thread_free(struct thread *td)
 {
 
+	TAILQ_REMOVE(&td->td_task->ts_tds, td, td_list);
 	free(td->td_stackb);
 	free(td);
 }
@@ -77,7 +78,7 @@ thread_alloc(struct task *ts, size_t stacksiz)
 		return (NULL);
 	}
 
-	TAILQ_INSERT_HEAD(&ts->ts_tds, td, td_list);
+	TAILQ_INSERT_TAIL(&ts->ts_tds, td, td_list);
 	td->td_task = ts;
 	td->td_stackb = stack;
 
@@ -88,6 +89,28 @@ thread_alloc(struct task *ts, size_t stacksiz)
 void
 task_free(struct task *ts)
 {
+	struct file *fp;
+	struct thread *td;
+	int i;
+
+	/* Free all threads */
+	do {
+		td = TAILQ_FIRST(&ts->ts_tds);
+		if (td != NULL)
+			thread_free(td);
+	} while (td != NULL);
+
+	/* Close open files */
+	for (i = 0; i < ts->ts_maxfiles; i++) {
+		fp = ts->ts_files[i];
+		if (fp == NULL)
+			continue;
+		if (--(fp->f_refc))
+			continue;
+		fp->f_ops->fo_close(fp);
+		free(fp->f_priv);
+		free(fp);
+	}
 
 	free(ts->ts_files);
 	free(ts->ts_stdin);
@@ -99,27 +122,55 @@ task_free(struct task *ts)
 
 
 struct task *
-task_alloc(void)
+task_alloc(size_t stacksiz)
 {
+	struct task *curts = TD_TASK(curthread);
 	struct task *ts;
+	int i;
 
+	/* Allocate task structure */
 	ts = calloc(1, sizeof(*ts));
 	if (ts == NULL)
 		return(NULL);
 
-	ts->ts_maxfiles = 4;
+	/* Allocate file descriptor table */
+	ts->ts_maxfiles = curts->ts_maxfiles;
 	ts->ts_files = calloc(ts->ts_maxfiles, sizeof(struct file));
+	if (ts->ts_files == NULL) {
+		free(ts);
+		return(NULL);
+	}
+
+	/* Allocate the main thread */
+	TAILQ_INIT(&ts->ts_tds);
+	thread_alloc(ts, stacksiz);
+	if (TAILQ_EMPTY(&ts->ts_tds)) {
+		free(ts);
+		return(NULL);
+	}
+
+	/* Link into the all tasks lists */
+	TAILQ_INSERT_TAIL(&tasks, ts, ts_list);
+	ts->ts_parent = curts;
+
+	/* Reference open files */
+	for (i = 0; i < ts->ts_maxfiles; i++) {
+		if (ts->ts_files[i] == NULL)
+			continue;
+		ts->ts_files[i] = curts->ts_files[i];
+		ts->ts_files[i]->f_refc++;
+	}
+
+	/* Allocate stdin, stdout, stderr */
 	ts->ts_stdin = calloc(1, sizeof(FILE));
 	ts->ts_stdout = calloc(1, sizeof(FILE));
 	ts->ts_stderr = calloc(1, sizeof(FILE));
-	TAILQ_INSERT_TAIL(&tasks, ts, ts_list);
 
-	if (ts->ts_files == NULL || ts->ts_stdin == NULL
-	    || ts->ts_stdout == NULL || ts->ts_stderr == NULL) {
+	if (ts->ts_stdin == NULL || ts->ts_stdout == NULL
+	    || ts->ts_stderr == NULL) {
 		task_free(ts);
 		return(NULL);
 	}
-	ts->ts_parent = TD_TASK(curthread);
 	((FILE *) ts->ts_stdin)->_fd = 0;
 	((FILE *) ts->ts_stdout)->_fd = 1;
 	((FILE *) ts->ts_stderr)->_fd = 2;

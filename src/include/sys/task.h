@@ -72,4 +72,8 @@ curthread_get(void)
 #define	curthread	curthread_get()
 
 #define	TD_TASK(td)	(td)->td_task
+
+struct task *task_alloc(size_t);
+void task_free(struct task *);
+
 #endif /* _SYS_TASK_H_ */
