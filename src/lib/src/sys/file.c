@@ -215,7 +215,8 @@ poll(struct pollfd fds[], nfds_t nfds, int timeout)
 	struct timespec start, now;
 	int i, ready, delta;
 
-	clock_gettime(CLOCK_MONOTONIC, &start);
+	if (timeout > 0)
+		clock_gettime(CLOCK_MONOTONIC, &start);
 
 again:
 	for (i = 0, ready = 0; i < nfds; i++) {
