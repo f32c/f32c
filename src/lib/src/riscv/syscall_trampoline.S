@@ -22,6 +22,7 @@ __syscall_ptrs:	.space 4
 	.section .text.__syscall_trampoline
 __syscall_trampoline:
 	la	t0, __syscall_ptrs
+	lw	t0, (t0)
 	addi	sp, sp, -24
 	add	t1, t1, t0
 	lw	gp, 0(t0)
