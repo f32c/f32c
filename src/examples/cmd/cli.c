@@ -15,6 +15,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <poll.h>
 #include <termios.h>
 #include <time.h>
 #include <unistd.h>
@@ -59,6 +60,15 @@ sig_h(int sig __unused)
 {
 
 	interrupt = 1;
+}
+
+
+static void
+stdin_poll(void)
+{
+	struct pollfd pollfd = {0, 0, 0};
+
+	poll(&pollfd, 1, 0);
 }
 
 
@@ -164,7 +174,7 @@ tok(char *line, char **tokv)
 			if (tokv[tokc] == NULL)
 				tokv[tokc] = cp;
 			break;
-		};
+		}
 	}
 
 	if (tokv[tokc] > (char *) TOK_MAX && tokv[tokc][0] != 0)
@@ -392,7 +402,7 @@ ls_walk(char *path, int flags)
 	/* Open the directory */
 	dir = opendir(path);
 	if (dir == NULL) {
-		printf("Error: %d\n", errno);
+		printf("%s\n", strerror(errno));
 		return;
 	}
 
@@ -568,7 +578,7 @@ cd_h(int argc, char **argv)
 	char path[128];
 
 	if (argc == 2 && chdir(argv[1]) != 0) {
-		printf("Error: %d\n", errno);
+		printf("%s\n", strerror(errno));
 		return;
 	}
 	getcwd(path, 128);
@@ -595,7 +605,7 @@ rm_h(int argc, char **argv)
 
 	for (i = 1; i < argc; i++)
 		if (unlink(argv[i]) != 0) {
-			printf("Error: %d\n", errno);
+			printf("%s\n", strerror(errno));
 			return;
 		}
 }
@@ -610,7 +620,7 @@ rmdir_h(int argc, char **argv)
 
 	for (i = 1; i < argc; i++)
 		if (rmdir(argv[i]) != 0) {
-			printf("Error: %d\n", errno);
+			printf("%s\n", strerror(errno));
 			return;
 		}
 }
@@ -624,7 +634,7 @@ mkdir_h(int argc, char **argv)
 
 	for (i = 1; i < argc; i++)
 		if (mkdir(argv[i], 0777) != 0) {
-			printf("Error: %d\n", errno);
+			printf("%s\n", strerror(errno));
 			return;
 		}
 }
@@ -661,7 +671,7 @@ mkfs_h(int argc, char **argv)
 	}
 	res = mkfs(argv[1], start, len);
 	if (res != FR_OK)
-		printf("Error: %d\n", res);
+		printf("%s\n", strerror(errno));
 }
 CMD_LINK(mkfs, mkfs_h);
 #endif
@@ -746,13 +756,12 @@ cp_h(int argc, char **argv)
 			printf("error writing %s byte %d\n", argv[2], tot);
 			return;
 		}
-#ifdef F32C
 		/* CTRL + C ? */
-		if (sio_getchar(0) == 3) {
-			printf("^C - interrupted!\n");
+		if (interrupt) {
+			printf("interrupted!\n");
 			got = 0;
-		}
-#endif
+		} else
+			stdin_poll();
 	} while (got > 0);
 	close(from);
 	close(to);
@@ -826,13 +835,12 @@ cmp_h(int argc, char **argv)
 			    pos);
 			break;
 		}
-#ifdef F32C
 		/* CTRL + C ? */
-		if (sio_getchar(0) == 3) {
-			printf("^C - interrupted!\n");
+		if (interrupt) {
+			printf("interrupted!\n");
 			break;
-		}
-#endif
+		} else
+			stdin_poll();
 	} while (got_a > 0);
 
 	close(a);
@@ -1587,11 +1595,11 @@ flash_h(int argc, char **argv)
 				if (!skipping) {
 					printf("*\n");
 					lno++;
-				} else if (interrupt || sio_getchar(0) == 27) {
-					/* CTRL + C or ESC ? */
-					printf("^C - interrupted!\n");
+				} else if (interrupt) {
+					/* CTRL + C */
 					break;
-				}
+				} else
+					stdin_poll();
 				skipping = 1;
 			}
 			start += 16;
