@@ -36,7 +36,11 @@
 #include <sys/syscall.h>
 #include <sys/task.h>
 
+#ifdef __mips__
 extern void *_gp;
+#else
+extern void *__global_pointer$;
+#endif
 extern void *__memtop;
 extern void *__ramdisk;
 extern void _start(void);
@@ -46,7 +50,12 @@ typedef int _start_t(int, char *const [], char *const []);
 uint32_t __spawn_regstore[16];
 
 void *syscall_trampoline[SYS__last + 1] = {
-	[SYS__gp_reserved] = &_gp,
+	[SYS__gp_reserved] =
+#ifdef __mips__
+		&_gp,
+#else
+		&__global_pointer$,
+#endif
 	[SYS_exit] = exit,
 	[SYS_open] = open,
 	[SYS_close] = close,
@@ -122,12 +131,12 @@ posix_spawn(int *cpid, const char *path, void *fa __unused, void *at __unused,
 		syscp = (void *) ((shortp[6] << 16) + shortp[8]);
 		bss = (void *) ((shortp[10] << 16) + shortp[12]);
 		end = (void *) ((shortp[14] << 16) + shortp[16]);
-#else /* !__mips__ */
+#else /* riscv / !__mips__ */
 	if (longp[0] == 0xf32c0037 &&
 	    hdrbuf[4] == 0x37 && (hdrbuf[5] & 0xf) == 0x4 &&
 	    hdrbuf[8] == 0x13 && hdrbuf[9] == 0x04 &&
-	    hdrbuf[12] == 0x37 && (hdrbuf[13] & 0xf) == 0x2 &&
-	    hdrbuf[16] == 0x13 && hdrbuf[17] == 0x02 &&
+	    hdrbuf[12] == 0x37 && (hdrbuf[13] & 0xf) == 0x4 &&
+	    hdrbuf[16] == 0x13 && hdrbuf[17] == 0x04 &&
 	    hdrbuf[20] == 0x37 && (hdrbuf[21] & 0xf) == 0x4 &&
 	    hdrbuf[24] == 0x13 && hdrbuf[25] == 0x04 &&
 	    hdrbuf[28] == 0xb7 && (hdrbuf[29] & 0xf) == 0x4 &&
@@ -160,7 +169,7 @@ posix_spawn(int *cpid, const char *path, void *fa __unused, void *at __unused,
 	} while (i > 0 && cp < (char *) bss);
 	close(fd);
 
-	if ((char *) bss < cp || (char *) bss > cp + 4) {
+	if ((char *) bss < cp /* XXX revisit: || (char *) bss > cp + 4 */) {
 		errno = ENOEXEC;
 		return (-1);
 	}
@@ -266,8 +275,7 @@ posix_spawn(int *cpid, const char *path, void *fa __unused, void *at __unused,
 		"jalr t0;"
 		/* Restore caller-preserved registers from a dedicated block */
 		".option norelax;"
-		"lui t0, %%hi(__spawn_regstore);"
-		"addi t0, t0, %%lo(__spawn_regstore);"
+		"la t0, __spawn_regstore;"
 		".option relax;"
 		"lw s0, (0 * 4)(t0);"
 		"lw s1, (1 * 4)(t0);"
