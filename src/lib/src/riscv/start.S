@@ -44,9 +44,15 @@ _start:
 	lui	s0, %hi(_start)	/* Executable code base address, absolute */
 	addi	s0, s0, %lo(_start)
 
+#ifdef CRT0OS
+	/* Declare __syscall_ptrs address */
+	lui	s0, %hi(__syscall_ptrs)
+	addi	s0, s0, %lo(__syscall_ptrs)
+#else
 	/* Set thread pointer */
 	lui	tp, %hi(thread0)
 	addi	tp, tp, %lo(thread0)
+#endif
 
 	/* BSS ssection bounds */
 	lui	s0, %hi(__bss_start) /* Start of BSS section, absolute */
