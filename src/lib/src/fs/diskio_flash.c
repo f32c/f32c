@@ -23,7 +23,7 @@
  * SUCH DAMAGE.
  */
 
-#include <stdio.h>
+#include <sys/sched.h>
 
 #include <fatfs/ff.h>
 #include <fatfs/diskio.h>
@@ -152,6 +152,7 @@ busy_wait(struct flash_priv *priv)
 {
 
 	do {
+		sched_yield();
 		spi_start_transaction(priv->io_port);
 		spi_byte(priv->io_port, SPI_CMD_RDSR);
 	} while (spi_byte(priv->io_port, SPI_CMD_RDSR) & 1);

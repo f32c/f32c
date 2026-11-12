@@ -34,6 +34,7 @@
 #include <sys/fcntl.h>
 #include <sys/file.h>
 #include <sys/task.h>
+#include <sys/sched.h>
 #include <sys/stat.h>
 
 /* XXX move to a .h ? */
@@ -246,7 +247,7 @@ again:
 		return (ready);
 
 	/* XXX todo: EINTR */
-	/* XXX todo: sched_yield() */
+	sched_yield();
 
 	if (timeout < 0)
 		goto again;

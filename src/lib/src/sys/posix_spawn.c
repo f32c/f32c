@@ -32,6 +32,7 @@
 
 #include <sys/file.h>
 #include <sys/ioccom.h>
+#include <sys/sched.h>
 #include <sys/stat.h>
 #include <sys/syscall.h>
 #include <sys/task.h>
@@ -79,6 +80,7 @@ void *syscall_trampoline[SYS__last + 1] = {
 	[SYS_clock_gettime] = clock_gettime,
 	[SYS_clock_settime] = clock_settime,
 	[SYS_nanosleep] = nanosleep,
+	[SYS_sched_yield] = sched_yield,
 };
 
 pid_t

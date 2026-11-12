@@ -27,6 +27,7 @@
 #include <stdlib.h>
 
 #include <sys/file.h>
+#include <sys/sched.h>
 
 extern int fd_ref(struct file *); /* XXX fixinclude */
  
@@ -106,7 +107,8 @@ pipe_write(struct file *fp, const void *buf, size_t nbytes)
 				task->ts_sigf &= ~2;
 				return (-1);
 			}
-			/* XXX TODO: notify system we are blocked, yield() */
+			/* notify the system we are blocked */
+			sched_yield();
 		}
 		pipe->s_buf[pipe->s_buf_head] = *cp++;
 		pipe->s_buf_head = buf_head_next;
@@ -141,7 +143,8 @@ pipe_read(struct file *fp, void *buf, size_t nbytes)
 				task->ts_sigf &= ~2;
 				return (-1);
 			}
-			/* XXX TODO: notify system we are blocked, yield() */
+			/* notify the system we are blocked */
+			sched_yield();
 		}
 		do {
 			cp[i++] = pipe->s_buf[pipe->s_buf_tail++];
