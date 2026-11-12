@@ -180,6 +180,28 @@ task_alloc(size_t stacksiz)
 
 
 int
+sched_yield(void)
+{
+	struct file *fp;
+
+	/* Prevent sched_yield() recursion */
+	if (curthread->td_inhibitors & TDI_YIELDED)
+		return (0);
+
+	curthread->td_inhibitors |= TDI_YIELDED;
+
+	/* Walk and poll all files, so they can flush / process queued data */
+	TAILQ_FOREACH(fp, &__files, f_link) {
+		if (fp->f_ops->fo_poll != NULL)
+			fp->f_ops->fo_poll(fp, 0);
+	}
+
+	curthread->td_inhibitors &= ~TDI_YIELDED;
+	return (0);
+}
+
+
+int
 atexit(void (*function)(void))
 {
 

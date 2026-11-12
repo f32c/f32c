@@ -26,6 +26,8 @@
 #ifndef _SYS_FILE_H_
 #define _SYS_FILE_H_
 
+#include <sys/queue.h>
+
 /* fileops types */
 typedef int fo_read_t(struct file *fp, void *buf, size_t nbytes);
 typedef int fo_write_t(struct file *fp, const void *buf, size_t nbytes);
@@ -51,10 +53,14 @@ struct file {
 	struct fileops	*f_ops;		/* file operations */
 	void		*f_priv;	/* file descriptor specific data */
 	struct tty	*f_tty;		/* tty, optional */
+	TAILQ_ENTRY(file) f_link;	/* all files linked list */
 	uint32_t	f_flags;	/* see fcntl.h */
 	uint16_t	f_mflags;	/* malloc flags */
 	uint16_t	f_refc;		/* reference count */
 }; 
+
+/* List of all files */
+extern TAILQ_HEAD(__files_head, file) __files;
 
 #define	F_MF_FILE_MALLOCED	0x0001
 #define	F_MF_PRIV_MALLOCED	0x0002

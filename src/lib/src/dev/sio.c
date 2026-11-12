@@ -28,6 +28,7 @@
 #include <stdlib.h>
 
 #include <sys/file.h>
+#include <sys/sched.h>
 #include <sys/tty.h>
 
 #include <dev/io.h>
@@ -78,6 +79,7 @@ static struct sio_state sio0_state = {
 struct file __sio0_file = {
 	.f_ops = &sio_fileops,
 	.f_priv = &sio0_state,
+	.f_link.tqe_prev = &__files.tqh_first,
 	.f_tty = &sio0_tty,
 	.f_refc = 3
 };
@@ -192,7 +194,8 @@ sio_read(struct file *fp, void *buf, size_t nbytes)
 				task->ts_sigf &= ~2;
 				return (-1);
 			}
-			/* XXX TODO: notify system we are blocked, yield() */
+			/* notify the system we are blocked */
+			sched_yield();
 		}
 		do {
 			cbuf[i++] = sio->s_rxbuf[sio->s_rxbuf_tail++];
@@ -230,7 +233,8 @@ sio_write(struct file *fp, const void *buf, size_t nbytes)
 				errno = EINTR;
 				return (-1);
 			}
-			/* XXX TODO: notify system we are blocked, yield() */
+			/* notify the system we are blocked */
+			sched_yield();
 		}
 
 		if (tios_i != tios_n)

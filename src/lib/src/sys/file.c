@@ -45,6 +45,12 @@ static struct file *sio0_stdfiles[3] = {
 	&__sio0_file, &__sio0_file, &__sio0_file
 };
 
+/* List of all files */
+struct __files_head __files = {
+	.tqh_first = &__sio0_file,		/* Files head init */
+	.tqh_last = &__sio0_file.f_link.tqe_next /* Files head init */
+};
+
 
 static void
 sio0_bootstrap(struct task *ts)
@@ -141,8 +147,10 @@ open(const char *path, int flags, ...)
 
 	fp->f_mflags = F_MF_FILE_MALLOCED | F_MF_PRIV_MALLOCED;
 
-	if (ff_open(fp, path, flags) == 0)
+	if (ff_open(fp, path, flags) == 0) {
+		TAILQ_INSERT_TAIL(&__files, fp, f_link);
 		return (fd);
+	}
 
 	ts->ts_files[fd] = NULL;
 	free(fp->f_priv);
@@ -172,6 +180,7 @@ close(int fd)
 	if ((fp->f_mflags & F_MF_FILE_MALLOCED) == 0)
 		return (0);
 
+	TAILQ_REMOVE(&__files, fp, f_link);
 	res = fp->f_ops->fo_close(fp);
 	free(fp->f_priv);
 	free(fp);

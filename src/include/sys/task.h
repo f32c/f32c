@@ -44,19 +44,30 @@ struct task {
 };
 
 struct thread {
-	void		*td_retaddr;	/* Jump there on exit */
+	void		*td_retaddr;	/* Jump there on exit. Do not move */
 	TAILQ_ENTRY(thread) td_list;	/* Owner task's threads linked list */
 	struct task	*td_task;	/* Owner task */
 	int		td_errno;	/* Last error */
 	struct regspace	*td_regs;	/* Saved register state */
 	char		*td_stackb;	/* Bottom of the stack space */
+	uint16_t	td_inhibitors;	/* Why can not run */
+	uint16_t	td_spare1;	/* alignment */
 };
+
+/*
+ * Reasons that the current thread can not be run yet.
+ * More than one may apply.
+ */
+#define	TDI_SUSPENDED	0x0001		/* On suspension queue. */
+#define	TDI_SLEEPING	0x0002		/* Actually asleep! (tricky). */
+#define	TDI_YIELDED	0x0004		/* Inside sched_yield() call. */
+#define	TDI_IWAIT	0x0010		/* Awaiting interrupt. */
 
 extern struct task task0;
 extern struct thread thread0;
 
-inline __pure struct thread *
-curthread_get(void)
+inline __pure2 struct thread *
+__curthread(void)
 {
 	struct thread *td;
 
@@ -65,11 +76,10 @@ curthread_get(void)
 #else /* __riscv__ */
 	__asm("mv %0, tp" : "=&r"(td));
 #endif
-
 	return (td);
 }
 
-#define	curthread	curthread_get()
+#define	curthread	(__curthread())
 
 #define	TD_TASK(td)	(td)->td_task
 

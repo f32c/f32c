@@ -102,6 +102,7 @@ int atexit(void (*)(void));
 #define	RAND_MAX	0x7fffffff
 
 int	clearenv(void);
+int	daemon(int, int);
 int	putenv(char *);
 char	*getenv(const char *);
 int	setenv(const char *, const char *, int);
