@@ -29,6 +29,7 @@
 #include <signal.h>
 
 #include <sys/queue.h>
+#include <sys/signalvar.h>
 
 struct task {
 	struct file	**ts_files;	/* Array of file pointers */
@@ -40,7 +41,6 @@ struct task {
 	TAILQ_ENTRY(task) ts_list;	/* All tasks linked list */
 	struct task	*ts_parent;	/* Parent task */
 	sig_t		ts_sigh;	/* Signal handler */
-	uint32_t	ts_sigf;	/* Signal flags */
 };
 
 struct thread {
@@ -50,6 +50,9 @@ struct thread {
 	int		td_errno;	/* Last error */
 	struct regspace	*td_regs;	/* Saved register state */
 	char		*td_stackb;	/* Bottom of the stack space */
+	sigqueue_t	td_sigqueue;	/* Sigs arrived, not delivered */
+#define	td_siglist	td_sigqueue.sq_signals
+	sigset_t	td_sigmask;	/* Current signal mask. */
 	uint16_t	td_inhibitors;	/* Why can not run */
 	uint16_t	td_spare1;	/* alignment */
 };

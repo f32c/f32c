@@ -194,12 +194,16 @@ ssize_t
 read(int fd, void *buf, size_t nbytes)
 {
 	struct file *fp = fd2fp(fd);
+	int res;
 
 	if (fp == NULL) {
 		errno = EBADF;
 		return (-1);
 	}
-	return (fp->f_ops->fo_read(fp, buf, nbytes));
+	res = fp->f_ops->fo_read(fp, buf, nbytes);
+	if (TD_TASK(curthread)->ts_parent == NULL && SIGPENDING(curthread))
+		sig_dispatch();
+	return (res);
 }
 
 
@@ -208,12 +212,16 @@ ssize_t
 write(int fd, const void *buf, size_t nbytes)
 {
 	struct file *fp = fd2fp(fd);
+	int res;
 
 	if (fp == NULL) {
 		errno = EBADF;
 		return (-1);
 	}
-	return (fp->f_ops->fo_write(fp, buf, nbytes));
+	res = fp->f_ops->fo_write(fp, buf, nbytes);
+	if (TD_TASK(curthread)->ts_parent == NULL && SIGPENDING(curthread))
+		sig_dispatch();
+	return (res);
 }
 
 
@@ -243,20 +251,24 @@ again:
 		if (fds[i].revents)
 			ready++;
 	}
+
+	if (SIGPENDING(curthread))
+		ready = EINTR;
+
 	if (ready != 0 || timeout == 0)
-		return (ready);
+		goto poll_done;
 
-	/* XXX todo: EINTR */
 	sched_yield();
-
-	if (timeout < 0)
-		goto again;
 
 	clock_gettime(CLOCK_MONOTONIC, &now);
 	delta = (now.tv_sec - start.tv_sec) * 1000;
 	delta += (now.tv_nsec - start.tv_nsec) / 1000000;
-	if (delta < timeout)
+	if (timeout < 0 || delta < timeout)
 		goto again;
+
+poll_done:
+	if (TD_TASK(curthread)->ts_parent == NULL && SIGPENDING(curthread))
+		sig_dispatch();
 	return (ready);
 }
 

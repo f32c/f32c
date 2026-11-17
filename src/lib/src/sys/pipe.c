@@ -28,6 +28,7 @@
 
 #include <sys/file.h>
 #include <sys/sched.h>
+#include <sys/signalvar.h>
 
 extern int fd_ref(struct file *); /* XXX fixinclude */
  
@@ -79,7 +80,6 @@ pipe(int *fd)
 static int
 pipe_write(struct file *fp, const void *buf, size_t nbytes)
 {
-	struct task *task = TD_TASK(curthread);
 	struct pipe_state *pipe = fp->f_priv;
 	const char *cp = buf;
 	int i;
@@ -102,9 +102,8 @@ pipe_write(struct file *fp, const void *buf, size_t nbytes)
 				errno = EAGAIN;
 				return (-1);
 			}
-			if (task->ts_sigf & 2) {
+			if (SIGPENDING(curthread)) {
 				errno = EINTR;
-				task->ts_sigf &= ~2;
 				return (-1);
 			}
 			/* notify the system we are blocked */
@@ -114,13 +113,12 @@ pipe_write(struct file *fp, const void *buf, size_t nbytes)
 		pipe->s_buf_head = buf_head_next;
 	}
 
-	return (0);
+	return (i);
 }
 
 static int
 pipe_read(struct file *fp, void *buf, size_t nbytes)
 {
-	struct task *task = TD_TASK(curthread);
 	struct pipe_state *pipe = fp->f_priv;
 	char *cp = buf;
 	int i, empty;
@@ -138,9 +136,8 @@ pipe_read(struct file *fp, void *buf, size_t nbytes)
 				errno = EAGAIN;
 				return (-1);
 			}
-			if (task->ts_sigf & 2) {
+			if (SIGPENDING(curthread)) {
 				errno = EINTR;
-				task->ts_sigf &= ~2;
 				return (-1);
 			}
 			/* notify the system we are blocked */

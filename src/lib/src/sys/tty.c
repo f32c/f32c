@@ -60,8 +60,6 @@ tty_oexpand(struct tty *tty, int c, char *buf)
 int
 tty_iproc(struct tty *tty, int c)
 {
-	struct task *task;
-	sig_t sigh;
 	int rflags = tty->t_rflags;
 
 	if (rflags & TTY_IGOTCR)
@@ -70,13 +68,13 @@ tty_iproc(struct tty *tty, int c)
 	switch(c) {
 	case 0x3: /* CTRL+C */
 		if (tty->t_termios.c_lflag & ISIG) {
-			task = TD_TASK(curthread);
-			sigh = task->ts_sigh;
-			if (sigh != NULL) {
-				sigh(SIGINT);
-				/* Notify stalled read() / write() */
-				task->ts_sigf |= (task->ts_sigf & 1) << 1;
-			}
+			/*
+			 * XXX FIXMME TODO: we should direct signals to
+			 * the process (task) group leader, which may
+			 * be different from the current thread's
+			 * task (process)
+			 */
+			SIGADDSET(curthread->td_siglist, SIGINT);
 			return (-1);
 		}
 		break;

@@ -25,6 +25,16 @@
 
 #include <sys/task.h>
 
+void
+sig_dispatch(void)
+{
+	struct task *task = TD_TASK(curthread);
+
+	if (task->ts_sigh)
+		task->ts_sigh(0 /* XXX fixme */);
+	SIGEMPTYSET(curthread->td_siglist);
+}
+
 sig_t
 signal(int sig, sig_t func)
 {
@@ -39,12 +49,7 @@ signal(int sig, sig_t func)
 int
 siginterrupt(int sig, int flag)
 {
-	struct task *task = TD_TASK(curthread);
-
-	if (flag)
-		task->ts_sigf |= 1;
-	else
-		task->ts_sigf &= ~1;
+	/* XXX todo fixme */
 
 	return (0);
 }

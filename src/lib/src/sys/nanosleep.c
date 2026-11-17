@@ -1,12 +1,12 @@
 
 #include <sys/sched.h>
+#include <sys/signalvar.h>
 #include <sys/time.h>
 
 #pragma weak nanosleep
 int
 nanosleep(const struct timespec *rqtp, struct timespec *rmtp)
 {
-	struct task *task = TD_TASK(curthread);
 	struct timespec lim, now;
 	int res = 0;
 
@@ -14,9 +14,8 @@ nanosleep(const struct timespec *rqtp, struct timespec *rmtp)
 	timespecadd(&now, rqtp, &lim);
 	do {
 		sched_yield();
-		if (task->ts_sigf & 2) {
+		if (SIGPENDING(curthread)) {
 			errno = EINTR;
-			task->ts_sigf &= ~2;
 			res = -1;
 			break;
 		}
@@ -26,5 +25,7 @@ nanosleep(const struct timespec *rqtp, struct timespec *rmtp)
 	if (rmtp != NULL)
 		*rmtp = *rqtp;
 
+        if (TD_TASK(curthread)->ts_parent == NULL && SIGPENDING(curthread))
+                sig_dispatch();
 	return (res);
 }
