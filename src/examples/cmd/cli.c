@@ -1379,6 +1379,22 @@ CMD_LINK(srec, srec_h);
 
 
 static void
+sleep_h(int argc, char **argv)
+{
+	double l;
+
+	if (argc != 2) {
+		printf("Invalid arguments\n");
+		return;
+	}
+
+	l = strtod(argv[1], NULL);
+	usleep(l * 1000000);
+}
+CMD_LINK(sleep, sleep_h);
+
+
+static void
 system_h(int argc, char **argv)
 {
 	pid_t childpid;
