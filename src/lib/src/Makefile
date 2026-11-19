@@ -107,9 +107,9 @@ ifeq ($(LIB),c)
  CFILES += stdio/getdelim.c stdio/getline.c stdio/gets.c \
 	stdio/perror.c stdio/printf.c stdio/sprintf.c stdio/sscanf.c
 
- CFILES += stdlib/abs.c stdlib/atoi.c stdlib/getenv.c stdlib/getopt.c \
-	stdlib/labs.c stdlib/malloc.c \
-	stdlib/qsort.c stdlib/random.c stdlib/strtol.c stdlib/strtoll.c \
+ CFILES += stdlib/abs.c stdlib/atof.c stdlib/atoi.c stdlib/getenv.c \
+	stdlib/getopt.c stdlib/labs.c stdlib/malloc.c stdlib/qsort.c \
+	stdlib/random.c stdlib/strtod.c stdlib/strtol.c stdlib/strtoll.c \
 	stdlib/strtoull.c
 
  CFILES += string/memchr.c string/memrchr.c \
